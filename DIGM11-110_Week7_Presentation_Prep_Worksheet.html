@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 7 Lab — Presentation Prep Worksheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#6842CC; --accent-d:#EDE9FE; --accent-dk:#3D2580;
+  --accent-mid:#5B35B3; --accent-border:#C4B5FD; --accent-muted:#DDD6FE;
+  --canvas:#fff; --surface-soft:#F9F8FF; --ink:#1C1028;
+  --body-text:#3B2F56; --muted:#7C7394; --border:#E8E4F5;
+  --nav-h:72px;
+  --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:24px; --r-full:9999px;
+  --shadow:rgba(60,30,120,.02) 0 0 0 1px, rgba(60,30,120,.04) 0 2px 6px, rgba(60,30,120,.08) 0 4px 12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--canvas);color:var(--body-text);height:100dvh;overflow:hidden;}
+
+/* scroller */
+.scroller{height:100dvh;overflow-y:scroll;scroll-snap-type:y mandatory;scroll-behavior:smooth;}
+.scroller::-webkit-scrollbar{width:6px;}
+.scroller::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:99px;}
+
+/* slides */
+.slide{scroll-snap-align:start;height:100dvh;min-height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.slide-inner{flex:1;overflow-y:auto;padding:calc(var(--nav-h) + 32px) 64px 40px;max-width:960px;margin:0 auto;width:100%;}
+.slide-inner::-webkit-scrollbar{width:4px;}
+.slide-inner::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:99px;}
+
+/* nav */
+.nav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:100;background:rgba(255,255,255,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 64px;gap:20px;}
+.nav-badge{background:var(--accent);color:#fff;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:var(--r-full);}
+.nav-title{font-size:13px;font-weight:600;color:var(--muted);}
+.nav-sep{flex:1;}
+.task-pill{display:flex;align-items:center;gap:8px;background:var(--surface-soft);border:1px solid var(--border);border-radius:var(--r-full);padding:6px 16px;font-size:13px;font-weight:600;color:var(--muted);transition:background .3s,color .3s;}
+.task-pill.all-done{background:var(--accent);color:#fff;border-color:var(--accent);}
+.task-pill-dot{width:8px;height:8px;border-radius:99px;background:var(--border);transition:background .3s;}
+.task-pill.all-done .task-pill-dot{background:rgba(255,255,255,.6);}
+
+/* dot nav */
+.dot-nav{position:fixed;right:28px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:10px;align-items:center;}
+.dot{width:8px;height:8px;border-radius:99px;background:rgba(0,0,0,.15);cursor:pointer;transition:all .25s;position:relative;}
+.dot:hover{background:var(--accent);}
+.dot.active{background:var(--accent);width:8px;height:20px;}
+.dot-tip{position:absolute;right:18px;top:50%;transform:translateY(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:5px 10px;border-radius:var(--r-sm);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;}
+.dot:hover .dot-tip{opacity:1;}
+
+/* counter */
+.counter{position:fixed;bottom:24px;right:64px;z-index:100;font-size:12px;font-weight:700;color:rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;}
+.counter-arrow{cursor:pointer;width:28px;height:28px;border-radius:var(--r-full);border:1px solid var(--border);background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;color:var(--body-text);transition:background .2s,border-color .2s;}
+.counter-arrow:hover{background:var(--surface-soft);border-color:var(--accent);}
+
+/* typography */
+.part-label{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;}
+.slide-title{font-size:clamp(22px,3.5vw,32px);font-weight:900;color:var(--ink);letter-spacing:-.02em;line-height:1.1;margin-bottom:6px;}
+.slide-desc{font-size:15px;color:var(--muted);line-height:1.6;margin-bottom:24px;}
+
+/* step header */
+.step-hd{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;}
+.step-num{width:30px;height:30px;border-radius:99px;background:var(--accent-dk);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.step-info strong{font-size:14px;font-weight:700;color:var(--ink);display:block;line-height:1.3;}
+.step-info span{font-size:13px;color:var(--muted);}
+
+/* textareas */
+.field-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:block;}
+.answer-area{width:100%;border:1.5px solid var(--border);border-radius:var(--r-md);padding:12px 14px;font-family:'Inter',sans-serif;font-size:14px;line-height:1.6;color:var(--ink);resize:vertical;background:var(--canvas);transition:border-color .2s,box-shadow .2s;}
+.answer-area:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(104,66,204,.15);}
+
+/* decision sub-card */
+.decision-block{border-left:3px solid var(--accent-border);padding:0 0 0 16px;margin-bottom:20px;}
+.decision-block:last-of-type{margin-bottom:0;}
+.decision-label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin-bottom:4px;}
+.decision-hint{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:8px;}
+
+/* callout */
+.callout{background:var(--accent-d);border-left:3px solid var(--accent);border-radius:var(--r-md);padding:12px 16px;font-size:13.5px;line-height:1.6;color:var(--body-text);margin-top:16px;}
+.callout b{font-weight:700;color:var(--accent-dk);}
+
+/* task rows */
+.task-row{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--r-md);cursor:pointer;user-select:none;border:1px solid transparent;transition:background .2s,border-color .2s;margin-bottom:6px;}
+.task-row:hover{background:var(--surface-soft);border-color:var(--border);}
+.task-row.done{background:var(--accent-d);border-color:rgba(104,66,204,.2);}
+.task-check{width:20px;height:20px;border-radius:6px;border:2px solid #ccc;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;background:#fff;transition:all .2s;}
+.task-row.done .task-check{background:var(--accent);border-color:var(--accent);}
+.task-check svg{display:none;}
+.task-row.done .task-check svg{display:block;}
+.task-text{font-size:14px;line-height:1.5;color:var(--ink);}
+.task-text code{font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(0,0,0,.06);padding:1px 6px;border-radius:4px;}
+.task-row.done .task-text{color:var(--muted);text-decoration:line-through;}
+
+/* sec counter badge */
+.sec-counter{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:22px;background:var(--surface-soft);border:1px solid var(--border);border-radius:var(--r-full);font-size:11px;font-weight:700;color:var(--muted);padding:0 8px;transition:background .3s,color .3s;}
+.sec-counter.done-sec{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* follow-up q cards */
+.q-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.q-card{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--canvas);cursor:pointer;user-select:none;transition:border-color .2s,background .2s;}
+.q-card:hover{border-color:var(--accent-border);background:var(--accent-d);}
+.q-card.flagged{background:var(--accent);border-color:var(--accent);}
+.q-num{width:26px;height:20px;border-radius:5px;background:var(--accent-d);color:var(--accent);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'JetBrains Mono',monospace;transition:background .2s,color .2s;}
+.q-card.flagged .q-num{background:rgba(255,255,255,.2);color:#fff;}
+.q-text{font-size:13px;line-height:1.4;color:var(--body-text);}
+.q-card.flagged .q-text{color:#fff;}
+.flag-counter-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);background:var(--surface-soft);border:1px solid var(--border);border-radius:var(--r-full);padding:5px 14px;margin-bottom:14px;}
+.flag-counter-pill em{font-style:normal;color:var(--accent);font-weight:900;font-size:14px;}
+
+/* dark checkin card */
+.checkin-dark{background:var(--accent-dk);border-radius:var(--r-xl);padding:24px;margin-bottom:14px;}
+.checkin-dark-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.checkin-dark-head h3{font-size:15px;font-weight:800;color:#fff;}
+.checkin-dark .task-row{border-color:rgba(255,255,255,.08);}
+.checkin-dark .task-row:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);}
+.checkin-dark .task-row.done{background:rgba(104,66,204,.25);border-color:rgba(196,181,253,.3);}
+.checkin-dark .task-check{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);}
+.checkin-dark .task-row.done .task-check{background:var(--accent-border);border-color:var(--accent-border);}
+.checkin-dark .task-text{color:rgba(255,255,255,.7);}
+.checkin-dark .task-row.done .task-text{color:rgba(255,255,255,.35);}
+.checkin-dark .sec-counter{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);}
+.checkin-dark .sec-counter.done-sec{background:var(--accent-border);color:var(--ink);border-color:var(--accent-border);}
+
+/* mid purple card */
+.checkin-mid{background:var(--accent-mid);border-radius:var(--r-xl);padding:24px;}
+.checkin-mid-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.checkin-mid-head h3{font-size:15px;font-weight:800;color:#fff;}
+.checkin-mid .task-row{border-color:rgba(255,255,255,.1);}
+.checkin-mid .task-row:hover{background:rgba(255,255,255,.08);}
+.checkin-mid .task-row.done{background:rgba(255,255,255,.12);}
+.checkin-mid .task-check{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);}
+.checkin-mid .task-row.done .task-check{background:var(--accent-border);border-color:var(--accent-border);}
+.checkin-mid .task-text{color:rgba(255,255,255,.8);}
+.checkin-mid .task-row.done .task-text{color:rgba(255,255,255,.35);}
+.checkin-mid .sec-counter{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);}
+.checkin-mid .sec-counter.done-sec{background:var(--accent-border);color:var(--ink);border-color:var(--accent-border);}
+
+/* done banner */
+.done-banner{display:none;background:var(--accent);border-radius:var(--r-xl);padding:24px;text-align:center;margin-top:16px;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+.done-banner.show{display:block;}
+@keyframes pop{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+.done-banner h3{font-size:20px;font-weight:900;color:#fff;margin-bottom:4px;}
+.done-banner p{font-size:13px;color:rgba(255,255,255,.6);}
+
+/* divider */
+.divider{height:1px;background:var(--border);margin:20px 0;}
+
+/* two col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+
+/* cover */
+.slide.cover{background:linear-gradient(165deg,#050110 0%,#150537 55%,#210852 100%);}
+.cover-inner{flex:1;display:flex;flex-direction:column;justify-content:center;padding:var(--nav-h) 80px 60px;max-width:960px;margin:0 auto;width:100%;}
+.cover-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(104,66,204,.15);border:1px solid rgba(196,181,253,.3);color:#C4B5FD;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:5px 14px;border-radius:var(--r-full);margin-bottom:24px;}
+.cover-h1{font-size:clamp(36px,6vw,68px);font-weight:900;color:#fff;line-height:1.0;letter-spacing:-.03em;margin-bottom:8px;}
+.cover-h1 em{font-style:normal;color:var(--accent-border);}
+.cover-sub{font-size:15px;color:rgba(255,255,255,.3);margin-bottom:40px;font-weight:500;}
+.cover-terminal{background:#0d0420;border:1px solid rgba(104,66,204,.2);border-radius:var(--r-xl);overflow:hidden;max-width:580px;}
+.cover-term-bar{display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);}
+.cover-term-bar span{width:10px;height:10px;border-radius:50%;}
+.cover-term-bar span:nth-child(1){background:#FF5F56;}
+.cover-term-bar span:nth-child(2){background:#FFBD2E;}
+.cover-term-bar span:nth-child(3){background:#27C93F;}
+.cover-term-body{padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:2;color:#6B5B9A;white-space:pre-line;}
+.cover-term-body .t-purple{color:#C4B5FD;}
+.cover-term-body .t-bright{color:#E9D5FF;}
+.cover-term-body .t-dim{color:rgba(255,255,255,.18);}
+.cover-term-body .t-label{color:rgba(255,255,255,.4);}
+.cover-term-body .t-core{color:#A78BFA;font-weight:700;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-badge">Week 7 Lab</div>
+  <span class="nav-title">Presentation Prep Worksheet &middot; Assessment 1 &middot; DIGM11-110</span>
+  <div class="nav-sep"></div>
+  <div class="task-pill" id="taskPill">
+    <div class="task-pill-dot"></div>
+    <span id="pillText">0 / 14 items</span>
+  </div>
+</nav>
+
+<div class="dot-nav" id="dotNav">
+  <div class="dot active" data-target="s1" onclick="goTo('s1')"><div class="dot-tip">Cover</div></div>
+  <div class="dot" data-target="s2" onclick="goTo('s2')"><div class="dot-tip">Brief &amp; User</div></div>
+  <div class="dot" data-target="s3" onclick="goTo('s3')"><div class="dot-tip">Research</div></div>
+  <div class="dot" data-target="s4" onclick="goTo('s4')"><div class="dot-tip">Decisions A</div></div>
+  <div class="dot" data-target="s5" onclick="goTo('s5')"><div class="dot-tip">Decisions B</div></div>
+  <div class="dot" data-target="s6" onclick="goTo('s6')"><div class="dot-tip">Reflection</div></div>
+  <div class="dot" data-target="s7" onclick="goTo('s7')"><div class="dot-tip">Follow-up Questions</div></div>
+  <div class="dot" data-target="s8" onclick="goTo('s8')"><div class="dot-tip">Checklist</div></div>
+</div>
+
+<div class="counter">
+  <div class="counter-arrow" onclick="prevSlide()">↑</div>
+  <span id="counterText">1 / 8</span>
+  <div class="counter-arrow" onclick="nextSlide()">↓</div>
+</div>
+
+<main class="scroller" id="scroller">
+
+  <!-- Slide 1: Cover -->
+  <section class="slide cover" id="s1">
+    <div class="cover-inner">
+      <div class="cover-badge">Week 7 · Lab Sheet</div>
+      <h1 class="cover-h1">Design<br><em>Presentation</em></h1>
+      <p class="cover-sub">Assessment 1 · 10 minutes · 2 follow-up questions · Week 8</p>
+      <div class="cover-terminal">
+        <div class="cover-term-bar"><span></span><span></span><span></span></div>
+        <div class="cover-term-body">
+<span class="t-bright">$ Assessment 1</span> <span class="t-dim">────────────────────</span>
+<span class="t-label">2m</span>  <span class="t-purple">1  Brief &amp; User</span>
+<span class="t-label">2m</span>  <span class="t-purple">2  Research &amp; Competitors</span>
+<span class="t-label">3m</span>  <span class="t-core">3  Design Decisions  ← CORE</span>
+<span class="t-label">2m</span>  <span class="t-purple">4  What You Would Do Differently</span>
+<span class="t-label">1m</span>  <span class="t-purple">5  Follow-up Questions</span>
+<span class="t-label">   </span>  <span class="t-dim">✓  Presentation Checklist</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 2: The Brief and the User -->
+  <section class="slide" id="s2" style="background:var(--surface-soft);">
+    <div class="slide-inner">
+      <div class="part-label">Section 1 · ~2 minutes</div>
+      <h2 class="slide-title">The Brief and the User</h2>
+      <p class="slide-desc">Start here. Your audience cannot evaluate your design without knowing who it is for.</p>
+
+      <div style="margin-bottom:16px;">
+        <label class="field-label">What is your website category, and what specific business or concept are you designing for?</label>
+        <textarea class="answer-area" rows="2" placeholder="e.g. Food &amp; restaurant — Miyako Japanese Kitchen, a Brisbane city lunch spot targeting CBD workers..."></textarea>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="field-label">Describe your primary persona in one paragraph — name, age, goal, frustration, and behaviour.</label>
+        <textarea class="answer-area" rows="4" placeholder="e.g. Alex, 29, project manager. Needs to find a nearby lunch option fast. Frustrated by menus buried behind long brand stories..."></textarea>
+      </div>
+      <div class="two-col">
+        <div>
+          <label class="field-label">What does your persona need to DO on this site?</label>
+          <textarea class="answer-area" rows="3" placeholder="e.g. See today's menu and location within 10 seconds..."></textarea>
+        </div>
+        <div>
+          <label class="field-label">What would make them leave immediately?</label>
+          <textarea class="answer-area" rows="3" placeholder="e.g. Hero video that autoplays and blocks the menu link..."></textarea>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:20px;">
+        <b>The test:</b> Can you introduce your user in under 60 seconds without looking at your Figma file? If not, you do not know your persona well enough yet. Keep practising until you can.
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 3: Research -->
+  <section class="slide" id="s3">
+    <div class="slide-inner">
+      <div class="part-label">Section 2 · ~2 minutes</div>
+      <h2 class="slide-title">Research and Competitor Analysis</h2>
+      <p class="slide-desc">What did you find? What gap does your design address?</p>
+
+      <div style="margin-bottom:16px;">
+        <label class="field-label">Name the two or three competitor sites you analysed. What do they do well?</label>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Grill'd — strong hero with clear CTA. Guzman Y Gomez — fast menu visibility. Both use sticky nav..."></textarea>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="field-label">What does your competitor analysis tell you that a user in your category needs from a website?</label>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Users in restaurant category need fast menu access, visible hours, and a location/map link above the fold..."></textarea>
+      </div>
+      <div>
+        <label class="field-label">What one insight from your research most directly shaped a design decision? Which decision?</label>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Competitors buried hours in the footer — so I placed them in the hero band directly below the CTA..."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 4: Design Decisions A -->
+  <section class="slide" id="s4" style="background:var(--surface-soft);">
+    <div class="slide-inner">
+      <div class="part-label">Section 3 · ~3 minutes · Part A</div>
+      <h2 class="slide-title">Design Decisions</h2>
+      <p class="slide-desc">Walk through your hi-fi mockup. For each decision, explain WHY — not what you like, but what justifies the choice.</p>
+
+      <div class="decision-block">
+        <div class="decision-label">Colour palette</div>
+        <p class="decision-hint">Why these colours? Reference your persona, the category emotional tone, or a competitor contrast gap.</p>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Deep red and warm cream — red signals appetite (category convention), cream avoids the clinical white competitors use..."></textarea>
+      </div>
+      <div class="decision-block">
+        <div class="decision-label">Typography</div>
+        <p class="decision-hint">Why this font pairing? How does it communicate your brand personality? Reference readability for your persona.</p>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Playfair Display headings (premium convention) + Inter 16px body (legible on mobile at 11:45am in sunlight)..."></textarea>
+      </div>
+      <div class="decision-block">
+        <div class="decision-label">Visual hierarchy</div>
+        <p class="decision-hint">What does the eye land on first? Is that your primary CTA? Reference the hook / explainer / descriptor model.</p>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Eye lands on h1 (hook) → subheading + CTA (explainer) → card grid (descriptor). Validated with squint test..."></textarea>
+      </div>
+
+      <div class="callout">
+        <b>Continue on the next slide:</b> Navigation · Hero section · Layout and spacing
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 5: Design Decisions B -->
+  <section class="slide" id="s5">
+    <div class="slide-inner">
+      <div class="part-label">Section 3 · ~3 minutes · Part B</div>
+      <h2 class="slide-title">Design Decisions <span style="color:var(--muted);font-weight:600;font-size:22px;">continued</span></h2>
+      <p class="slide-desc">Every sentence must connect a visual decision to the brief, the persona, or a measurable standard.</p>
+
+      <div class="decision-block">
+        <div class="decision-label">Navigation</div>
+        <p class="decision-hint">What pattern did you choose and why? Reference category conventions and your persona's expected behaviour.</p>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Sticky top nav, 5 links, hamburger at mobile. Restaurant convention — my persona expects nav at top, not sidebar..."></textarea>
+      </div>
+      <div class="decision-block">
+        <div class="decision-label">Hero section</div>
+        <p class="decision-hint">What is the primary CTA and what makes it visible? What image treatment did you choose and why?</p>
+        <textarea class="answer-area" rows="3" placeholder="e.g. CTA 'See today's menu' — violet 48px button, 4.5:1 contrast. Food close-up not exterior (users scan what they'll eat)..."></textarea>
+      </div>
+      <div class="decision-block">
+        <div class="decision-label">Layout and spacing</div>
+        <p class="decision-hint">How does your 8px grid create visual rhythm? Reference CRAP principles — alignment and proximity.</p>
+        <textarea class="answer-area" rows="3" placeholder="e.g. All elements snap to 8px grid — section padding 64px, card gap 24px. Proximity groups related items (8px internal, 32px between)..."></textarea>
+      </div>
+
+      <div class="callout">
+        <b>The rule:</b> If you catch yourself saying 'I chose this because I like it' — stop. Ask what research or principle supports that choice. If there is none, reconsider the decision.
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 6: Reflection -->
+  <section class="slide" id="s6" style="background:var(--surface-soft);">
+    <div class="slide-inner">
+      <div class="part-label">Section 4 · ~2 minutes</div>
+      <h2 class="slide-title">What You Would Do Differently</h2>
+      <p class="slide-desc">Self-reflection is part of the grade. This is not weakness — it is design thinking.</p>
+
+      <div style="margin-bottom:16px;">
+        <label class="field-label">What is the weakest part of your current design, and what specifically would you change?</label>
+        <textarea class="answer-area" rows="4" placeholder="e.g. Secondary text (#9CA3AF) fails WCAG AA contrast — I'd darken to #4B5563. Mobile card spacing collapses to 4px, breaking rhythm..."></textarea>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="field-label">If you had two more weeks, what would you add or develop further? Why?</label>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Prototype the booking flow and test it with two people matching my persona. Static mockup doesn't test CTA conversion..."></textarea>
+      </div>
+      <div>
+        <label class="field-label">What did you learn about your user during this project that you did not know at the start?</label>
+        <textarea class="answer-area" rows="3" placeholder="e.g. Assumed desktop — competitor analytics showed 78% mobile. Changed my whole layout approach after the wireframe stage..."></textarea>
+      </div>
+      <div class="callout" style="margin-top:16px;">
+        <b>How to frame it well:</b> 'The contrast ratio on my secondary text fails WCAG AA — I would darken the grey from #9CA3AF to #4B5563.' Specific, self-aware, actionable. Not: 'I would make it better.'
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 7: Follow-up Questions -->
+  <section class="slide" id="s7">
+    <div class="slide-inner">
+      <div class="part-label">Section 5 · Questions</div>
+      <h2 class="slide-title">Follow-up Questions — Prepare Now</h2>
+      <p class="slide-desc">The lecturer will ask two questions. They test whether you understand your own decisions. Practise answering all eight.</p>
+
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;">Click the <strong>two you are least prepared</strong> to answer right now.</p>
+      <div class="flag-counter-pill"><em id="flagCount">0</em> / 2 flagged as hardest</div>
+
+      <div class="q-grid-2">
+        <div class="q-card" onclick="flagQ(this)">
+          <div class="q-num">Q1</div>
+          <div class="q-text">Why did you choose this colour palette? Walk me through the decision.</div>
+        </div>
+        <div class="q-card" onclick="flagQ(this)">
+          <div class="q-num">Q2</div>
+          <div class="q-text">Who is your persona and how does this layout serve them specifically?</div>
+        </div>
+        <div class="q-card" onclick="flagQ(this)">
+          <div class="q-num">Q3</div>
+          <div class="q-text">Your hero image — why this one? What does it communicate about your brand?</div>
+        </div>
+        <div class="q-card" onclick="flagQ(this)">
+          <div class="q-num">Q4</div>
+          <div class="q-text">How does your mobile wireframe differ from desktop, and why?</div>
+        </div>
+        <div class="q-card" onclick="flagQ(this)">
+          <div class="q-num">Q5</div>
+          <div class="q-text">What's the first action you want users to take? How does your design guide them there?</div>
+        </div>
+        <div class="q-card" onclick="flagQ(this)">
+          <div class="q-num">Q6</div>
+          <div class="q-text">Which of Nielsen's heuristics is most relevant to a decision you made? Show me.</div>
+        </div>
+        <div class="q-card" onclick="flagQ(this)">
+          <div class="q-num">Q7</div>
+          <div class="q-text">Your competitor analysis — what did it tell you, and where is that visible in your design?</div>
+        </div>
+        <div class="q-card" onclick="flagQ(this)">
+          <div class="q-num">Q8</div>
+          <div class="q-text">What would you change about your design if you had more time?</div>
+        </div>
+      </div>
+
+      <label class="field-label">Draft answers to the two you flagged:</label>
+      <textarea class="answer-area" rows="5" placeholder="Q__ :&#10;&#10;&#10;Q__ :"></textarea>
+    </div>
+  </section>
+
+  <!-- Slide 8: Checklist -->
+  <section class="slide" id="s8" style="background:var(--surface-soft);">
+    <div class="slide-inner">
+      <div class="part-label">Before Week 8</div>
+      <h2 class="slide-title">Presentation Checklist</h2>
+      <p class="slide-desc" style="margin-bottom:16px;">Complete everything below before your presentation slot in Week 8.</p>
+
+      <div class="checkin-dark">
+        <div class="checkin-dark-head">
+          <h3>Figma File — Before You Present</h3>
+          <span class="sec-counter" id="cnt-figma">0 / 7</span>
+        </div>
+        <div id="tasks-figma">
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">All four pages named correctly: Page 01 Research, Page 02 Wireframes, Page 03 Mockup, Page 04 Assets</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Page 03 shows a complete hi-fi homepage mockup with design system applied</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Colour and text styles are registered and named in the Assets panel</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Primary CTA button, nav bar, and content card are saved as components</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Page 04 contains logo SVG, favicon, and at least one sourced and renamed image</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">File is shared with the lecturer (view access) before your presentation time</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">File name follows the convention: <code>LastnameFirstname_A1</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkin-mid">
+        <div class="checkin-mid-head">
+          <h3>Presentation Readiness</h3>
+          <span class="sec-counter" id="cnt-ready">0 / 7</span>
+        </div>
+        <div id="tasks-ready">
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Can introduce your persona in under 60 seconds without notes</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Can walk through your hi-fi mockup explaining every major decision</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Every design decision connects to research, the persona, or a principle — not personal taste</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Prepared answers for at least 6 of the 8 common follow-up questions</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Know which part of your design is weakest and can articulate what you would do differently</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">Practised the full presentation at least once, timed, out loud</div>
+          </div>
+          <div class="task-row" onclick="toggle(this)">
+            <div class="task-check"><svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="#1C1028" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="task-text">AI Declaration submitted with all six steps completed</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="done-banner" id="doneBanner">
+        <h3>Checklist complete — you're ready to present!</h3>
+        <p>All 14 items checked. Good luck in your Week 8 presentation slot.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  const TOTAL = 14;
+  const SLIDES = ['s1','s2','s3','s4','s5','s6','s7','s8'];
+  let currentIdx = 0;
+
+  function toggle(el){
+    el.classList.toggle('done');
+    updateAll();
+  }
+
+  function flagQ(el){
+    if(el.classList.contains('flagged')){
+      el.classList.remove('flagged');
+    } else {
+      if(document.querySelectorAll('.q-card.flagged').length >= 2) return;
+      el.classList.add('flagged');
+    }
+    document.getElementById('flagCount').textContent = document.querySelectorAll('.q-card.flagged').length;
+  }
+
+  function updateAll(){
+    const figmaDone = document.querySelectorAll('#tasks-figma .task-row.done').length;
+    const figmaTotal = document.querySelectorAll('#tasks-figma .task-row').length;
+    const readyDone = document.querySelectorAll('#tasks-ready .task-row.done').length;
+    const readyTotal = document.querySelectorAll('#tasks-ready .task-row').length;
+    const total = figmaDone + readyDone;
+
+    const cntFigma = document.getElementById('cnt-figma');
+    cntFigma.textContent = figmaDone + ' / ' + figmaTotal;
+    cntFigma.classList.toggle('done-sec', figmaDone === figmaTotal);
+
+    const cntReady = document.getElementById('cnt-ready');
+    cntReady.textContent = readyDone + ' / ' + readyTotal;
+    cntReady.classList.toggle('done-sec', readyDone === readyTotal);
+
+    document.getElementById('pillText').textContent = total + ' / ' + TOTAL + ' items';
+    document.getElementById('taskPill').classList.toggle('all-done', total === TOTAL);
+    document.getElementById('doneBanner').classList.toggle('show', total === TOTAL);
+  }
+
+  function goTo(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
+  function prevSlide(){ if(currentIdx > 0) goTo(SLIDES[currentIdx - 1]); }
+  function nextSlide(){ if(currentIdx < SLIDES.length - 1) goTo(SLIDES[currentIdx + 1]); }
+
+  document.addEventListener('keydown', e=>{
+    if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+    if(e.key === 'ArrowDown' || e.key === 'PageDown') nextSlide();
+    if(e.key === 'ArrowUp' || e.key === 'PageUp') prevSlide();
+  });
+
+  const scroller = document.getElementById('scroller');
+  const dots = document.querySelectorAll('.dot');
+  const observer = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting && entry.intersectionRatio >= 0.5){
+        const id = entry.target.id;
+        currentIdx = SLIDES.indexOf(id);
+        dots.forEach(d => d.classList.toggle('active', d.dataset.target === id));
+        document.getElementById('counterText').textContent = (currentIdx + 1) + ' / ' + SLIDES.length;
+      }
+    });
+  }, {root: scroller, threshold: 0.5});
+
+  SLIDES.forEach(id => { const el = document.getElementById(id); if(el) observer.observe(el); });
+
+  updateAll();
+</script>
+</body>
+</html>
