@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGM11-110 — Forum Nine: Building Structure with Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ──────────────────────────────────────────────────────── */
+:root {
+  --bg:       #193200;
+  --accent:   #c6fe7f;
+  --text:     #F0EFEB;
+  --muted:    #777777;
+  --surface:  #1f3d08;
+  --border:   rgba(240,239,235,0.08);
+  --red:      #ff4d4d;
+  --green:    #c6fe7f;
+  --max-w:    1200px;
+  --pad:      clamp(24px, 5vw, 80px);
+  --font-d:   'Barlow Condensed', sans-serif;
+  --font-b:   'Barlow', sans-serif;
+  --font-m:   'Fira Mono', 'SF Mono', monospace;
+}
+
+/* ── RESET ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  background: var(--bg);
+}
+body {
+  font-family: var(--font-b);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  cursor: none;
+}
+a { color: inherit; text-decoration: none; }
+img, video { display: block; }
+@media (hover: none) { body { cursor: auto; } }
+
+/* ── GRAIN ───────────────────────────────────────────────────────── */
+.grain {
+  position: fixed; inset: -50%; width: 200%; height: 200%;
+  z-index: 900; pointer-events: none; opacity: .022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .grain { animation: grain .3s steps(1) infinite; }
+}
+@keyframes grain {
+  0%  { transform: translate(0,0); }
+  20% { transform: translate(-4%,-3%); }
+  40% { transform: translate(3%,2%); }
+  60% { transform: translate(-2%,4%); }
+  80% { transform: translate(4%,-1%); }
+}
+
+/* ── CURSOR ──────────────────────────────────────────────────────── */
+.cursor {
+  position: fixed; top: 0; left: 0; z-index: 9999;
+  width: 20px; height: 20px;
+  border: 1.5px solid rgba(198,254,127,.6);
+  border-radius: 50%; pointer-events: none;
+  transition: scale .25s, background .25s, border-color .25s;
+  will-change: transform;
+}
+.cursor.hover { scale: 2.2; background: rgba(198,254,127,.1); border-color: var(--accent); }
+@media (hover: none) { .cursor { display: none; } }
+
+/* ── PROGRESS BAR ────────────────────────────────────────────────── */
+.progress-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 700; height: 2px; }
+.progress-fill { height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .08s linear; }
+
+/* ── SLIDE NAV (right-side dots) ─────────────────────────────────── */
+#slide-nav {
+  position: fixed; right: 32px; top: 50%; transform: translateY(-50%);
+  z-index: 900; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+}
+.nav-dot { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 0; opacity: .4; transition: opacity .25s; }
+.nav-dot:hover { opacity: .8; }
+.nav-dot.active { opacity: 1; }
+.nav-dot-label {
+  font-family: var(--font-m); font-size: 10px; letter-spacing: .08em;
+  color: var(--text); white-space: nowrap;
+  opacity: 0; transform: translateX(8px); transition: opacity .2s, transform .2s;
+}
+.nav-dot:hover .nav-dot-label, .nav-dot.active .nav-dot-label { opacity: 1; transform: translateX(0); }
+.nav-dot-pip { width: 6px; height: 6px; border-radius: 50%; background: var(--text); transition: width .3s, height .3s, background .3s; flex-shrink: 0; }
+.nav-dot.active .nav-dot-pip { width: 10px; height: 10px; background: var(--accent); }
+
+#section-counter {
+  position: fixed; bottom: 28px; right: 32px; z-index: 900;
+  font-family: var(--font-m); font-size: 11px; letter-spacing: .1em; color: var(--muted);
+}
+#section-counter .cur { color: var(--accent); font-weight: 600; }
+
+@media (max-width: 768px) {
+  #slide-nav { right: 16px; }
+  #section-counter { right: 16px; bottom: 20px; }
+}
+@media (max-width: 520px) {
+  #slide-nav { display: none; }
+}
+
+/* ── SECTION BASE ────────────────────────────────────────────────── */
+.section {
+  min-height: 100vh;
+  padding: 80px var(--pad) 100px;
+  display: flex; flex-direction: column; justify-content: center;
+  scroll-snap-align: start; position: relative;
+}
+.inner { max-width: var(--max-w); margin: 0 auto; width: 100%; }
+
+/* ── TYPOGRAPHY ──────────────────────────────────────────────────── */
+.label {
+  font-size: 10px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.label::before { content: ''; display: block; width: 20px; height: 1px; background: var(--accent); flex-shrink: 0; }
+.d-xl { font-family: var(--font-d); font-size: clamp(72px, 14vw, 200px); font-weight: 900; line-height: .88; letter-spacing: -.02em; text-transform: uppercase; color: var(--text); }
+.d-lg { font-family: var(--font-d); font-size: clamp(52px, 9vw, 130px); font-weight: 800; line-height: .9;  letter-spacing: -.015em; text-transform: uppercase; color: var(--text); }
+.d-md { font-family: var(--font-d); font-size: clamp(36px, 6vw, 80px);  font-weight: 800; line-height: .92; letter-spacing: -.01em;  text-transform: uppercase; color: var(--text); }
+.d-sm { font-family: var(--font-d); font-size: clamp(28px, 4vw, 56px);  font-weight: 700; line-height: .95; letter-spacing: -.005em; text-transform: uppercase; color: var(--text); }
+.accent { color: var(--accent); }
+.body-lg { font-size: clamp(16px, 1.6vw, 20px); font-weight: 300; line-height: 1.7; color: rgba(240,239,235,.68); }
+.body-md { font-size: 15px; font-weight: 400; line-height: 1.75; color: rgba(240,239,235,.6); }
+.body-sm { font-size: 13px; font-weight: 400; line-height: 1.7; color: var(--muted); }
+
+/* ── SPACING UTILS ───────────────────────────────────────────────── */
+.mt8  { margin-top: 8px;  } .mt16 { margin-top: 16px; } .mt24 { margin-top: 24px; }
+.mt32 { margin-top: 32px; } .mt40 { margin-top: 40px; } .mt48 { margin-top: 48px; }
+.mt56 { margin-top: 56px; } .mt64 { margin-top: 64px; } .mt80 { margin-top: 80px; }
+.mb16 { margin-bottom: 16px; } .mb24 { margin-bottom: 24px; } .mb32 { margin-bottom: 32px; }
+.mb40 { margin-bottom: 40px; } .mb48 { margin-bottom: 48px; } .mb64 { margin-bottom: 64px; }
+
+/* ── RULE ────────────────────────────────────────────────────────── */
+.rule { border: none; border-top: 1px solid var(--border); }
+
+/* ── HERO ────────────────────────────────────────────────────────── */
+#hero {
+  min-height: 100vh; padding: 0; display: flex;
+  align-items: flex-end; overflow: hidden;
+  scroll-snap-align: start;
+}
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background-image: url('coffee_2.png');
+  background-size: cover; background-position: center 30%;
+  background-color: var(--bg);
+}
+.hero-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom,
+    rgba(12,12,12,.2) 0%,
+    rgba(12,12,12,.05) 25%,
+    rgba(12,12,12,.55) 65%,
+    rgba(12,12,12,.96) 100%);
+}
+.hero-content {
+  position: relative; z-index: 1; width: 100%;
+  padding: var(--pad);
+  padding-bottom: clamp(64px, 10vh, 120px);
+  max-width: calc(var(--max-w) + 2 * var(--pad)); margin: 0 auto;
+}
+.hero-eyebrow {
+  font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::before { content: ''; display: block; width: 20px; height: 1px; background: var(--accent); }
+.hero-title {
+  font-family: var(--font-d); font-size: clamp(80px, 16vw, 220px);
+  font-weight: 900; line-height: .86;
+  text-transform: uppercase; letter-spacing: -.025em; color: var(--text);
+  margin-bottom: 28px;
+}
+.hero-meta {
+  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+}
+.hero-sub {
+  font-size: clamp(14px, 1.4vw, 17px); font-weight: 300;
+  color: rgba(240,239,235,.5); line-height: 1.6; max-width: 480px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid rgba(198,254,127,.3); padding: 8px 16px; border-radius: 2px;
+  font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); white-space: nowrap;
+}
+.scroll-hint {
+  position: absolute; bottom: 40px; right: var(--pad); z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  writing-mode: vertical-rl; opacity: .35;
+}
+.scroll-hint span { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.scroll-line {
+  width: 1px; height: 48px; background: rgba(240,239,235,.2); overflow: hidden; position: relative;
+}
+.scroll-line::after {
+  content: ''; position: absolute; top: -100%; left: 0; width: 100%; height: 100%; background: var(--accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-line::after { animation: scrolltick 1.9s ease-in-out infinite; }
+}
+@keyframes scrolltick { 0% { top: -100%; } 100% { top: 200%; } }
+
+/* ── OVERVIEW SECTION ────────────────────────────────────────────── */
+.stat-row { display: flex; gap: clamp(32px, 6vw, 80px); flex-wrap: wrap; }
+.stat-num {
+  font-family: var(--font-d); font-size: clamp(40px, 6vw, 80px); font-weight: 800; line-height: 1;
+  color: var(--text);
+}
+.stat-num span { color: var(--accent); }
+.stat-label { font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+
+/* ── CALLOUT ─────────────────────────────────────────────────────── */
+.callout {
+  border-left: 2px solid var(--accent); padding: 24px 32px;
+  background: rgba(198,254,127,.03);
+}
+.callout-text {
+  font-family: var(--font-d); font-size: clamp(28px, 4vw, 56px);
+  font-weight: 700; line-height: 1.05; text-transform: uppercase; color: var(--text);
+}
+.callout-sub { font-size: 14px; color: rgba(240,239,235,.5); line-height: 1.65; margin-top: 14px; }
+
+/* ── SPLIT GRID ──────────────────────────────────────────────────── */
+.split   { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 5vw, 80px); }
+.split-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(20px, 3vw, 40px); }
+@media (max-width: 768px) {
+  .split   { grid-template-columns: 1fr; gap: 40px; }
+  .split-3 { grid-template-columns: 1fr; }
+}
+
+/* ── NUMBERED LIST ───────────────────────────────────────────────── */
+.num-list { display: flex; flex-direction: column; }
+.num-item {
+  display: grid; grid-template-columns: 52px 1fr;
+  gap: 24px; padding: 22px 0;
+  border-bottom: 1px solid var(--border); align-items: start;
+}
+.num-item:first-child { border-top: 1px solid var(--border); }
+.num {
+  font-family: var(--font-d); font-size: 11px; font-weight: 700;
+  letter-spacing: .14em; color: var(--accent); padding-top: 4px;
+}
+.num-item h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.num-item p  { font-size: 13px; color: rgba(240,239,235,.55); line-height: 1.7; }
+
+/* ── VS COMPARISON ───────────────────────────────────────────────── */
+.vs-wrap  { display: grid; grid-template-columns: 1fr 36px 1fr; gap: 0; align-items: start; }
+.vs-mid   { display: flex; justify-content: center; padding-top: 48px; font-family: var(--font-d); font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--muted); }
+.vs-col   { padding: 28px; border: 1px solid var(--border); border-radius: 3px; }
+.vs-col.dim { opacity: .5; }
+.vs-col.current { border-color: rgba(198,254,127,.25); background: rgba(198,254,127,.03); }
+.vs-col-tag { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.vs-col.current .vs-col-tag { color: var(--accent); }
+.vs-col h3 { font-family: var(--font-d); font-size: clamp(20px, 2.5vw, 32px); font-weight: 700; text-transform: uppercase; color: var(--text); margin-bottom: 20px; }
+.vs-col.current h3 { color: var(--accent); }
+.vs-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.vs-col li { font-size: 13px; color: rgba(240,239,235,.6); line-height: 1.55; padding-left: 14px; position: relative; }
+.vs-col li::before { content: '—'; position: absolute; left: 0; color: rgba(240,239,235,.2); }
+@media (max-width: 700px) { .vs-wrap { grid-template-columns: 1fr; } .vs-mid { padding: 12px 0; font-size: 11px; justify-content: flex-start; } .vs-col { margin-bottom: 12px; } }
+
+/* ── LANGUAGE CARDS ──────────────────────────────────────────────── */
+.lang-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.lang-card { border: 1px solid var(--border); border-radius: 3px; overflow: hidden; display: flex; flex-direction: column; }
+.lang-head { padding: 22px 20px 16px; border-bottom: 1px solid var(--border); }
+.lang-tag  { font-size: 9px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.lang-name { font-family: var(--font-d); font-size: clamp(24px, 3vw, 44px); font-weight: 900; text-transform: uppercase; color: var(--text); line-height: .95; }
+.lang-role { font-size: 12px; font-style: italic; color: var(--muted); margin-top: 5px; }
+.lang-desc { padding: 14px 20px; font-size: 12.5px; color: rgba(240,239,235,.55); line-height: 1.65; flex: 1; }
+@media (max-width: 900px) { .lang-grid { grid-template-columns: 1fr; } }
+
+/* ── CODE BLOCK ──────────────────────────────────────────────────── */
+.code-block { background: #060d06; border: 1px solid rgba(198,254,127,.12); border-radius: 6px; overflow: hidden; font-family: var(--font-m); }
+.code-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; background: rgba(198,254,127,.04); border-bottom: 1px solid rgba(198,254,127,.08);
+}
+.code-dots { display: flex; gap: 5px; }
+.code-dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(240,239,235,.12); }
+.code-file { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-family: var(--font-b); }
+.code-block pre {
+  padding: 18px 18px; font-size: 12px; line-height: 1.85;
+  color: rgba(240,239,235,.75); overflow-x: auto;
+  white-space: pre; tab-size: 2;
+}
+.code-block pre.wrap { white-space: pre-wrap; }
+.t  { color: var(--accent); }           /* tag */
+.a  { color: #93c5fd; }                 /* attribute */
+.v  { color: #fca5a5; }                 /* value */
+.p  { color: #c084fc; }                 /* property */
+.s  { color: var(--accent); }           /* selector */
+.c  { color: var(--muted); font-style: italic; } /* comment */
+.hl { color: var(--text); }             /* highlight */
+
+/* ── FLOW STEPS ──────────────────────────────────────────────────── */
+.flow { display: flex; flex-direction: column; }
+.flow-step {
+  display: grid; grid-template-columns: 48px 1fr;
+  gap: 20px; padding: 20px 0;
+  border-bottom: 1px solid var(--border); align-items: start;
+}
+.flow-step:first-child { border-top: 1px solid var(--border); }
+.flow-n { font-family: var(--font-d); font-size: 28px; font-weight: 800; color: rgba(198,254,127,.2); line-height: 1.05; }
+.flow-step.on .flow-n { color: var(--accent); }
+.flow-step.on h4 { color: var(--accent); }
+.flow-step h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.flow-step p  { font-size: 13px; color: rgba(240,239,235,.5); line-height: 1.6; }
+
+/* ── CHECK GRID ──────────────────────────────────────────────────── */
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 700px) { .check-grid { grid-template-columns: 1fr; } }
+.check-col { display: flex; flex-direction: column; }
+.check-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 0; font-size: 10px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  border-bottom: 2px solid var(--border); margin-bottom: 2px;
+}
+.check-head.bad  { border-bottom-color: var(--red);    color: var(--red); }
+.check-head.good { border-bottom-color: var(--accent);  color: var(--accent); }
+.check-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; color: rgba(240,239,235,.7); line-height: 1.5;
+}
+.check-item:last-child { border-bottom: none; }
+.ci { font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px; width: 18px; text-align: center; }
+.check-item.bad  .ci { color: var(--red); }
+.check-item.good .ci { color: var(--accent); }
+.check-item.bad  { background: rgba(255,77,77,.025); padding-left: 4px; }
+.check-item.good { background: rgba(198,254,127,.025); padding-left: 4px; }
+
+/* ── LAYERS GRID ─────────────────────────────────────────────────── */
+.layers-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+}
+@media (max-width: 900px) { .layers-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 500px) { .layers-grid { grid-template-columns: 1fr; } }
+.layer-cell { background: var(--bg); padding: 28px 22px; position: relative; }
+.layer-cell.on  { background: rgba(198,254,127,.04); }
+.layer-bg-num {
+  position: absolute; top: 10px; right: 14px;
+  font-family: var(--font-d); font-size: 52px; font-weight: 900;
+  color: rgba(240,239,235,.04); line-height: 1; pointer-events: none;
+}
+.layer-cell.on .layer-bg-num { color: rgba(198,254,127,.1); }
+.layer-tag  { font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.layer-cell.on .layer-tag { color: var(--accent); }
+.layer-title { font-family: var(--font-d); font-size: 22px; font-weight: 700; text-transform: uppercase; color: var(--text); margin-bottom: 6px; }
+.layer-week  { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.layer-cell.on .layer-week { color: var(--accent); }
+.layer-desc  { font-size: 12.5px; color: rgba(240,239,235,.52); line-height: 1.65; }
+.layer-cell.on .layer-desc { color: rgba(240,239,235,.65); }
+
+/* ── SEMANTIC TABLE ──────────────────────────────────────────────── */
+.sem-grid { display: flex; flex-direction: column; }
+.sem-row {
+  display: grid; grid-template-columns: 160px 1fr; gap: 20px;
+  padding: 12px 0; border-bottom: 1px solid var(--border); align-items: start;
+}
+.sem-row:first-child { border-top: 1px solid var(--border); }
+.sem-tag  { font-family: var(--font-m); font-size: 12px; color: var(--accent); padding-top: 1px; }
+.sem-desc { font-size: 12.5px; color: rgba(240,239,235,.55); line-height: 1.6; }
+@media (max-width: 600px) { .sem-row { grid-template-columns: 1fr; gap: 4px; } }
+
+/* ── GITHUB STEPS ────────────────────────────────────────────────── */
+.gh-steps { display: flex; flex-direction: column; }
+.gh-step {
+  display: grid; grid-template-columns: 52px 1fr; gap: 22px;
+  padding: 22px 0; border-bottom: 1px solid var(--border); align-items: start;
+}
+.gh-step:first-child { border-top: 1px solid var(--border); }
+.gh-n { font-family: var(--font-d); font-size: 32px; font-weight: 800; color: rgba(198,254,127,.2); line-height: 1; }
+.gh-step h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.gh-step p  { font-size: 13px; color: rgba(240,239,235,.5); line-height: 1.7; }
+
+/* ── URL BOX ─────────────────────────────────────────────────────── */
+.url-box {
+  background: var(--surface); border: 1px solid rgba(198,254,127,.2); border-radius: 4px;
+  padding: 22px 28px; font-family: var(--font-m); font-size: clamp(14px, 2vw, 22px);
+  color: var(--text); display: flex; flex-wrap: wrap; align-items: center; gap: 0;
+  overflow-x: auto;
+}
+.url-dim { opacity: .3; }
+.url-hi  { color: var(--accent); }
+
+/* ── CHECKIN ─────────────────────────────────────────────────────── */
+.checkin-list { display: flex; flex-direction: column; }
+.checkin-item {
+  display: grid; grid-template-columns: 44px 1fr; gap: 20px;
+  padding: 22px 0; border-bottom: 1px solid var(--border); align-items: start;
+}
+.checkin-item:first-child { border-top: 1px solid var(--border); }
+.checkin-n { font-family: var(--font-d); font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--accent); padding-top: 3px; }
+.checkin-item h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.checkin-item p  { font-size: 13px; color: rgba(240,239,235,.5); line-height: 1.65; }
+
+/* ── KEY CONCEPTS ────────────────────────────────────────────────── */
+.concepts-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+}
+@media (max-width: 700px) { .concepts-grid { grid-template-columns: 1fr; } }
+.concept-cell { background: var(--bg); padding: 28px 24px; display: grid; grid-template-columns: 44px 1fr; gap: 14px; }
+.concept-n { font-family: var(--font-d); font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--accent); padding-top: 3px; }
+.concept-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.concept-body  { font-size: 12.5px; color: rgba(240,239,235,.5); line-height: 1.65; }
+
+/* ── NEXT WEEK CARD ──────────────────────────────────────────────── */
+.next-card {
+  background: rgba(198,254,127,.05); border: 1px solid rgba(198,254,127,.2);
+  border-radius: 4px; padding: 40px;
+}
+.next-tag   { font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+.next-card h3 { font-family: var(--font-d); font-size: clamp(28px, 4vw, 56px); font-weight: 800; text-transform: uppercase; color: var(--text); margin-bottom: 10px; }
+.next-card p  { font-size: 14px; color: rgba(240,239,235,.5); line-height: 1.7; margin-bottom: 28px; }
+.before-list  { display: flex; flex-direction: column; gap: 8px; }
+.before-item  {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; color: rgba(240,239,235,.6);
+}
+.before-item::before { content: '→'; color: var(--accent); font-weight: 600; flex-shrink: 0; font-size: 12px; padding-top: 1px; }
+
+/* ── FOOTER ──────────────────────────────────────────────────────── */
+footer {
+  background: var(--bg); border-top: 1px solid var(--border);
+  padding: 40px var(--pad);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+}
+.footer-brand { font-family: var(--font-d); font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.footer-brand span { color: var(--accent); }
+.footer-info  { font-size: 11px; color: rgba(240,239,235,.2); letter-spacing: .06em; }
+
+/* ── FOCUS ───────────────────────────────────────────────────────── */
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+/* ── CODE IN CHECKLIST ───────────────────────────────────────────── */
+.check-item code { font-family: var(--font-m); font-size: 11px; color: var(--muted); }
+.body-md code, .body-sm code, .flow-step p code { font-family: var(--font-m); font-size: 0.9em; color: var(--muted); }
+
+/* ── REVEAL ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .rev { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+  .rev.in { opacity: 1; transform: none; }
+  .rev[data-d="1"] { transition-delay: .08s; }
+  .rev[data-d="2"] { transition-delay: .16s; }
+  .rev[data-d="3"] { transition-delay: .24s; }
+  .rev[data-d="4"] { transition-delay: .32s; }
+  .rev[data-d="5"] { transition-delay: .40s; }
+  .rev[data-d="6"] { transition-delay: .48s; }
+}
+</style>
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+
+<!-- Progress -->
+<div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- Slide nav (right-side dots, built by JS) -->
+<nav id="slide-nav" role="navigation" aria-label="Slide navigation"></nav>
+<div id="section-counter"><span class="cur" id="counter-cur">01</span> / <span id="counter-total">18</span></div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ HERO -->
+<section id="hero" data-title="Welcome">
+  <div class="hero-bg" role="img" aria-label="Coffee background"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">DIGM11-110 · Bond University</div>
+    <h1 class="hero-title">FORUM<br>NINE</h1>
+    <div class="hero-meta">
+      <p class="hero-sub">Building Structure with Copilot. Phase 2 begins.</p>
+      <span class="hero-badge">Week 9 · 2026</span>
+    </div>
+  </div>
+  <div class="scroll-hint" aria-hidden="true">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ OVERVIEW -->
+<section class="section" id="overview" data-title="Phase 2">
+  <div class="inner">
+    <h2 class="d-lg mb32 rev">Phase 2<br><span class="accent">Begins.</span></h2>
+    <div class="split">
+      <div>
+        <p class="body-lg rev" data-d="2">We introduce HTML, CSS, and JS as concepts, the Copilot workflow, the layered prompting method, and Layer 1 — building your HTML skeleton.</p>
+        <div class="stat-row mt40 rev" data-d="3">
+          <div>
+            <div class="stat-num">Week <span>8</span></div>
+            <div class="stat-label">Assessment 1 Presentations</div>
+          </div>
+          <div>
+            <div class="stat-num"><span>23</span></div>
+            <div class="stat-label">June 2026</div>
+          </div>
+        </div>
+      </div>
+      <div class="rev" data-d="3">
+        <div class="callout">
+          <p class="callout-text">Let's jump in <span class="accent">→</span></p>
+          <p class="callout-sub">This week marks the start of Phase 2. You're no longer designing — you're directing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════ REVIEW -->
+<section class="section" id="review" data-title="Review">
+  <div class="inner">
+    <div class="label rev">Review ← Week 8</div>
+    <h2 class="d-md mb40 rev" data-d="1">Last Week:<br>Assessment 1 Presentations</h2>
+
+    <div class="num-list mb64">
+      <div class="num-item rev" data-d="1">
+        <span class="num">01</span>
+        <div>
+          <h3>You presented your design</h3>
+          <p>10 minutes, your Figma file, two follow-up questions. You explained every decision in your mockup to a live audience.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="2">
+        <span class="num">02</span>
+        <div>
+          <h3>You were critiqued</h3>
+          <p>The follow-up questions tested whether your decisions were grounded in research and the persona — not personal taste.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="3">
+        <span class="num">03</span>
+        <div>
+          <h3>You received feedback</h3>
+          <p>Take note of what the follow-up questions revealed. Those gaps are exactly what Phase 2 will surface again — in code.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="4">
+        <span class="num">04</span>
+        <div>
+          <h3>Phase 1 is complete</h3>
+          <p>Research, wireframes, hi-fi mockup, brand style guide. Everything on Pages 01–04 of your Figma file.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="5">
+        <span class="num">05</span>
+        <div>
+          <h3>Phase 2 starts today</h3>
+          <p>You will now build what you designed. Microsoft Copilot writes the code. You direct it, evaluate it, and refine it.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="6">
+        <span class="num">06</span>
+        <div>
+          <h3>Assessment 2 is in Week 12</h3>
+          <p>10-minute presentation of your live website. Same structure as Assessment 1 — brief, decisions, reflection, questions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ REVIEW / REFLECT -->
+<section class="section" id="review2" data-title="Reflection">
+  <div class="inner">
+    <h3 class="d-sm mb40 rev">Can you answer these<br>from your presentation?</h3>
+    <div class="num-list">
+      <div class="num-item rev" data-d="1">
+        <span class="num">01</span>
+        <div>
+          <h3>What follow-up question caught you most off guard?</h3>
+          <p>What would a stronger answer have looked like?</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="2">
+        <span class="num">02</span>
+        <div>
+          <h3>Which design decision are you least confident about now?</h3>
+          <p>Which decision in your Figma mockup are you least confident about — and why?</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="3">
+        <span class="num">03</span>
+        <div>
+          <h3>What is the single thing you most want your site to achieve?</h3>
+          <p>For your persona. Keep that answer in mind — Phase 2 will ask the same questions in code.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════ PHASE 2 -->
+<section class="section" id="phase2" data-title="What Changes">
+  <div class="inner">
+    <h2 class="d-md mb48 rev">What Changes<br>in <span class="accent">Phase 2</span></h2>
+
+    <div class="vs-wrap rev" data-d="2">
+      <div class="vs-col dim">
+        <div class="vs-col-tag">Phase 1</div>
+        <h3>The Designer</h3>
+        <ul>
+          <li>You were the designer</li>
+          <li>Figma was your tool</li>
+          <li>You made decisions about layout, colour, and type</li>
+          <li>The output was a mockup — a picture of a website</li>
+          <li>Your work existed in one file</li>
+        </ul>
+      </div>
+      <div class="vs-mid">VS</div>
+      <div class="vs-col current">
+        <div class="vs-col-tag">Phase 2 — Now</div>
+        <h3>The Director</h3>
+        <ul>
+          <li>You are the director</li>
+          <li>Microsoft Copilot is your tool</li>
+          <li>You make decisions about prompts, evaluation, and refinement</li>
+          <li>The output is a live website — real code in a real browser</li>
+          <li>Your work exists on the internet</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ PHASE 2 / GOALS -->
+<section class="section" id="phase2-goals" data-title="The Goals">
+    <div class="inner">
+    <div class="num-list mb56">
+      <div class="num-item rev" data-d="1">
+        <span class="num">01</span>
+        <div>
+          <h3>A live website URL</h3>
+          <p>By Week 12 you will have a real website on the internet — a site any user can visit on any device, built from code, not a Figma file.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="2">
+        <span class="num">02</span>
+        <div>
+          <h3>Built from your Figma design</h3>
+          <p>Your Assessment 2 site should match your Assessment 1 mockup. Every prompt you write is directing Copilot toward your existing design system.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="3">
+        <span class="num">03</span>
+        <div>
+          <h3>Directed by you — not generated by AI</h3>
+          <p>You are assessed on how well you directed Copilot, how critically you evaluated its output, and how honestly you reflected on the result.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="4">
+        <span class="num">04</span>
+        <div>
+          <h3>Documented in your AI Declaration</h3>
+          <p>Every prompt, every failure, every fix. Your declaration is part of your grade. Vague documentation of a polished site scores poorly.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quote -->
+    <div class="callout rev" data-d="2">
+      <p class="callout-text">The AI writes the code.<br>You make the decisions.</p>
+      <p class="callout-sub">One of those is a career skill. Prompting is the skill. Evaluation is the skill. Critical thinking is the skill.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ LANGUAGES -->
+<section class="section" id="languages" data-title="Languages">
+  <div class="inner">
+    <h2 class="d-md mb16 rev">Three Languages.<br>One Website.</h2>
+    <p class="body-lg mb48 rev" data-d="2">You do not need to write any of these. You need to know what they do so you can direct Copilot and evaluate its output.</p>
+
+    <div class="lang-grid mb64">
+      <!-- HTML -->
+      <div class="lang-card rev" data-d="1">
+        <div class="lang-head">
+          <div class="lang-tag">Layer 1</div>
+          <div class="lang-name">HTML</div>
+          <div class="lang-role">The skeleton</div>
+        </div>
+        <div class="lang-desc">HyperText Markup Language. Defines the structure and content of the page. Every heading, paragraph, image, link, and section is an HTML element.</div>
+        <div class="code-block">
+          <div class="code-head">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-file">index.html</span>
+          </div>
+          <pre><span class="t">&lt;header&gt;</span>
+  <span class="t">&lt;nav&gt;</span>...<span class="t">&lt;/nav&gt;</span>
+<span class="t">&lt;/header&gt;</span>
+<span class="t">&lt;main&gt;</span>
+  <span class="t">&lt;section</span> <span class="a">class</span>=<span class="v">"hero"</span><span class="t">&gt;</span>
+    <span class="t">&lt;h1&gt;</span>Welcome<span class="t">&lt;/h1&gt;</span>
+  <span class="t">&lt;/section&gt;</span>
+<span class="t">&lt;/main&gt;</span></pre>
+        </div>
+      </div>
+      <!-- CSS -->
+      <div class="lang-card rev" data-d="2">
+        <div class="lang-head">
+          <div class="lang-tag">Layers 2–4</div>
+          <div class="lang-name">CSS</div>
+          <div class="lang-role">The skin and clothes</div>
+        </div>
+        <div class="lang-desc">Cascading Style Sheets. Controls how the HTML looks. Colour, typography, spacing, layout, and responsiveness. Your Figma design system tokens become CSS values.</div>
+        <div class="code-block">
+          <div class="code-head">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-file">style.css</span>
+          </div>
+          <pre><span class="s">header</span> {
+  <span class="p">background</span>: #0F172A;
+  <span class="p">padding</span>: 16px 32px;
+}
+<span class="s">h1</span> {
+  <span class="p">font-size</span>: 48px;
+  <span class="p">color</span>: #3B82F6;
+}</pre>
+        </div>
+      </div>
+      <!-- JS -->
+      <div class="lang-card rev" data-d="3">
+        <div class="lang-head">
+          <div class="lang-tag">Copilot handles this</div>
+          <div class="lang-name">JS</div>
+          <div class="lang-role">The muscles</div>
+        </div>
+        <div class="lang-desc">JavaScript. Adds interactivity — hamburger menus opening, carousels moving, forms validating. For this course, Copilot writes all JS. You evaluate whether it works.</div>
+        <div class="code-block">
+          <div class="code-head">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-file">script.js</span>
+          </div>
+          <pre><span class="c">// Hamburger menu toggle</span>
+button.addEventListener(<span class="v">'click'</span>, () =&gt; {
+  nav.classList
+    .toggle(<span class="v">'open'</span>)
+});</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Browser pipeline -->
+    <div class="rule mb48 rev"></div>
+    <h3 class="d-sm mb24 rev">How a browser turns<br>code into a page</h3>
+    <p class="body-md mb32 rev" data-d="1">You need a mental model of what Copilot is producing.</p>
+    <div class="flow rev" data-d="2">
+      <div class="flow-step on">
+        <div class="flow-n">1</div>
+        <div>
+          <h4>Copilot writes code</h4>
+          <p>HTML, CSS, and JS files are generated based on your prompt. Each is a plain text file.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">2</div>
+        <div>
+          <h4>You save the files</h4>
+          <p>index.html, style.css, script.js — all in one folder. The HTML file links to the CSS and JS files.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">3</div>
+        <div>
+          <h4>GitHub Pages hosts the files</h4>
+          <p>You push the folder to GitHub. GitHub Pages makes the files available at a public URL.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">4</div>
+        <div>
+          <h4>The browser requests the files</h4>
+          <p>When someone visits your URL, the browser downloads the files and reads them in order.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">5</div>
+        <div>
+          <h4>The browser renders the page</h4>
+          <p>HTML provides structure, CSS applies styling, JS adds behaviour. The page appears on screen.</p>
+        </div>
+      </div>
+    </div>
+    <p class="body-sm mt16 rev" data-d="3"><span class="accent">Your job is step 1.</span> Copilot does the writing. GitHub does steps 3–5 automatically.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ COPILOT -->
+<section class="section" id="copilot" data-title="Copilot">
+  <div class="inner">
+    <h2 class="d-md mb16 rev">What Copilot is doing<br>when it generates code</h2>
+    <p class="body-lg mb48 rev" data-d="2">Copilot is a large language model. It predicts code the same way it predicts text — based on your prompt and its training data.</p>
+    <div class="num-list">
+      <div class="num-item rev" data-d="1">
+        <span class="num">01</span>
+        <div>
+          <h3>It reads your prompt as instructions</h3>
+          <p>The more specific your prompt, the more specific the output. Vague prompts produce generic code. Precise prompts — with exact colours, fonts, and class names — produce targeted code.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="2">
+        <span class="num">02</span>
+        <div>
+          <h3>It does not know your Figma file</h3>
+          <p>Copilot has never seen your design. Every visual decision — colour HEX, font name, spacing value — must be written into your prompt. It cannot infer from a screenshot.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ COPILOT / MISTAKES -->
+<section class="section" id="copilot-2" data-title="Copilot / Mistakes">
+  <div class="inner">
+    <div class="num-list">
+      <div class="num-item rev" data-d="1">
+        <span class="num">03</span>
+        <div>
+          <h3>It makes mistakes</h3>
+          <p>Copilot will produce code that does not match your mockup. It will use wrong colours, wrong fonts, wrong spacing. This is expected. Evaluation and iteration are part of the process.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="2">
+        <span class="num">04</span>
+        <div>
+          <h3>It cannot test its own output</h3>
+          <p>Copilot does not open a browser. It does not know if its code actually looks right. You must copy the code, open it in a browser, and compare it to your mockup. That comparison is your job.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ COPILOT / CONTEXT -->
+<section class="section" id="copilot-3" data-title="Copilot / Context">
+  <div class="inner">
+    <div class="num-list">
+      <div class="num-item rev" data-d="1">
+        <span class="num">05</span>
+        <div>
+          <h3>Context accumulates in a conversation</h3>
+          <p>In one Copilot conversation, earlier prompts inform later ones. Keep your Layer 1, Layer 2, and Layer 3 sessions in separate conversations — or provide context explicitly at the start of each.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════ METHOD -->
+<section class="section" id="method" data-title="The Method">
+  <div class="inner">
+    <h2 class="d-md mb16 rev">The Layered<br><span class="accent">Prompting Method</span></h2>
+    <p class="body-lg mb48 rev" data-d="2">Why we build in layers — not all at once.</p>
+
+    <!-- Why layers -->
+    <div class="check-grid mb64 rev" data-d="2">
+      <div class="check-col">
+        <div class="check-head bad">✗ Build everything at once</div>
+        <div class="check-item bad"><span class="ci">✗</span>One massive prompt → one massive output</div>
+        <div class="check-item bad"><span class="ci">✗</span>Hard to evaluate — too many things at once</div>
+        <div class="check-item bad"><span class="ci">✗</span>When something goes wrong, you cannot isolate the problem</div>
+        <div class="check-item bad"><span class="ci">✗</span>Copilot gets confused by complex multi-layer instructions</div>
+        <div class="check-item bad"><span class="ci">✗</span>If you need to change the colour, the whole thing needs rewriting</div>
+      </div>
+      <div class="check-col">
+        <div class="check-head good">✓ Build in four layers</div>
+        <div class="check-item good"><span class="ci">✓</span>One focused prompt per layer → manageable output</div>
+        <div class="check-item good"><span class="ci">✓</span>Easy to evaluate — one concern at a time</div>
+        <div class="check-item good"><span class="ci">✓</span>Errors are isolated to the layer where they occur</div>
+        <div class="check-item good"><span class="ci">✓</span>Copilot stays focused on a single job at a time</div>
+        <div class="check-item good"><span class="ci">✓</span>Change a colour? Layer 2 prompt only — structure stays intact</div>
+      </div>
+    </div>
+
+    <!-- 4 layers -->
+    <p class="body-sm mb24 rev"><span class="accent">Rule:</span> Each layer builds on the one before. Never skip a layer.</p>
+    <div class="layers-grid rev" data-d="1">
+      <div class="layer-cell on">
+        <div class="layer-bg-num">1</div>
+        <div class="layer-tag">Layer 1</div>
+        <div class="layer-title">Structure</div>
+        <div class="layer-week">Today — Week 9 Lab</div>
+        <div class="layer-desc">Semantic HTML skeleton. No CSS. Every section, heading, nav, main, footer in the correct nesting order. No colour. No fonts.</div>
+      </div>
+      <div class="layer-cell">
+        <div class="layer-bg-num">2</div>
+        <div class="layer-tag">Layer 2</div>
+        <div class="layer-title">Styling</div>
+        <div class="layer-week">Week 10</div>
+        <div class="layer-desc">Apply your design system. Background colours from Figma. Google Fonts linked. 8px spacing scale applied. No responsiveness yet.</div>
+      </div>
+      <div class="layer-cell">
+        <div class="layer-bg-num">3</div>
+        <div class="layer-tag">Layer 3</div>
+        <div class="layer-title">Responsive</div>
+        <div class="layer-week">Week 11</div>
+        <div class="layer-desc">Media queries for mobile (375px) and tablet (768px). Hamburger nav. Grid collapse to single column. Font size adjustments.</div>
+      </div>
+      <div class="layer-cell">
+        <div class="layer-bg-num">4</div>
+        <div class="layer-tag">Layer 4</div>
+        <div class="layer-title">Refinement</div>
+        <div class="layer-week">Week 11</div>
+        <div class="layer-desc">Specific fixes comparing your Figma mockup to your live site. Target individual elements that are wrong. The comparison method in full.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════ LAYER 1 -->
+<section class="section" id="layer1" data-title="Layer 1">
+  <div class="inner">
+    <h2 class="d-md mb16 rev">Layer 1:<br><span class="accent">Structure</span></h2>
+    <p class="body-lg mb48 rev" data-d="2">A correctly structured HTML file. No styles. No colour. Just the skeleton — and that is exactly the goal.</p>
+
+    <!-- What Layer 1 produces + Semantic HTML -->
+    <div class="split mb64">
+      <!-- Code output -->
+      <div class="rev" data-d="1">
+        <div class="label mb16">What Layer 1 produces</div>
+        <div class="code-block">
+          <div class="code-head">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <span class="code-file">index.html — Layer 1 output</span>
+          </div>
+          <pre><span class="t">&lt;!DOCTYPE html&gt;</span>
+<span class="t">&lt;html</span> <span class="a">lang</span>=<span class="v">"en"</span><span class="t">&gt;</span>
+<span class="t">&lt;head&gt;</span>
+  <span class="t">&lt;title&gt;</span>...<span class="t">&lt;/title&gt;</span>
+<span class="t">&lt;/head&gt;</span>
+<span class="t">&lt;body&gt;</span>
+  <span class="t">&lt;header&gt;</span>
+    <span class="t">&lt;nav&gt;</span>...<span class="t">&lt;/nav&gt;</span>
+  <span class="t">&lt;/header&gt;</span>
+  <span class="t">&lt;main&gt;</span>
+    <span class="t">&lt;section</span> <span class="a">class</span>=<span class="v">"hero"</span><span class="t">&gt;</span>
+      <span class="t">&lt;h1&gt;</span>...<span class="t">&lt;/h1&gt;</span>
+      <span class="t">&lt;p&gt;</span>...<span class="t">&lt;/p&gt;</span>
+      <span class="t">&lt;a</span> <span class="a">href</span>=<span class="v">"#"</span><span class="t">&gt;</span>...<span class="t">&lt;/a&gt;</span>
+    <span class="t">&lt;/section&gt;</span>
+  <span class="t">&lt;/main&gt;</span>
+  <span class="t">&lt;footer&gt;</span>...<span class="t">&lt;/footer&gt;</span>
+<span class="t">&lt;/body&gt;</span>
+<span class="t">&lt;/html&gt;</span></pre>
+        </div>
+        <p class="body-sm mt16 accent">✓ Plain is the goal. This is correct.</p>
+      </div>
+
+      <!-- Semantic HTML -->
+      <div class="rev" data-d="2">
+        <div class="label mb16">Semantic HTML — the elements you need</div>
+        <p class="body-sm mb24">Semantic elements describe their purpose. They help browsers, screen readers, and search engines understand your page.</p>
+        <div class="sem-grid">
+          <div class="sem-row"><span class="sem-tag">&lt;header&gt;</span><span class="sem-desc">Top section — contains your logo and navigation. One per page.</span></div>
+          <div class="sem-row"><span class="sem-tag">&lt;nav&gt;</span><span class="sem-desc">Navigation links. Always inside &lt;header&gt;.</span></div>
+          <div class="sem-row"><span class="sem-tag">&lt;main&gt;</span><span class="sem-desc">The primary content area. Everything between header and footer. One per page.</span></div>
+          <div class="sem-row"><span class="sem-tag">&lt;section&gt;</span><span class="sem-desc">A thematic grouping of content. Needs a heading. Use class names.</span></div>
+          <div class="sem-row"><span class="sem-tag">&lt;article&gt;</span><span class="sem-desc">A self-contained piece of content — a card, a post, a tile. Can be repeated.</span></div>
+          <div class="sem-row"><span class="sem-tag">&lt;footer&gt;</span><span class="sem-desc">Bottom section — copyright, secondary links, contact. One per page.</span></div>
+          <div class="sem-row"><span class="sem-tag">&lt;h1&gt;–&lt;h6&gt;</span><span class="sem-desc">Headings in order of importance. Only one &lt;h1&gt; per page. Never skip levels.</span></div>
+          <div class="sem-row"><span class="sem-tag">&lt;img&gt;</span><span class="sem-desc">Images. Always include an alt attribute. alt="" is required.</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ LAYER 1 / TEMPLATE -->
+<section class="section" id="layer1-template" data-title="Layer 1 / Template">
+  <div class="inner">
+    <div class="label rev" id="prompt-template">The Layer 1 Prompt Template</div>
+    <p class="body-md mb32 rev" data-d="1">Copy this structure. Fill in the square brackets. Do not deviate from the layer constraint — the explicit "no CSS" instruction is critical.</p>
+    <div class="code-block mb48 rev" data-d="2">
+      <div class="code-head">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-file">Layer 1 Prompt Template — Copilot</span>
+      </div>
+      <pre class="wrap">I am building a <span class="v">[category]</span> website called <span class="v">[business name]</span>.
+Please write a complete HTML skeleton for my homepage
+using semantic HTML5 only.
+
+<span class="c">Do not add any CSS.</span>
+<span class="c">Do not add any inline styles.</span>
+<span class="c">Structure only.</span>
+
+The page must include these sections in this order:
+
+1. &lt;header&gt; containing a &lt;nav&gt; with 5 links:
+   <span class="v">[Home] [About] [Menu] [Gallery] [Contact]</span>
+
+2. &lt;main&gt; containing:
+   — &lt;section class="hero"&gt; with an &lt;h1&gt;, a &lt;p&gt;, and an &lt;a&gt; CTA button
+   — &lt;section class="features"&gt; with three &lt;article&gt; cards,
+     each containing &lt;h2&gt;, &lt;p&gt;
+   — &lt;section class="gallery"&gt; with six &lt;figure&gt; elements
+
+3. &lt;footer&gt; with copyright text, secondary nav links,
+   and social media placeholders
+
+Add a class to every section.
+Use meaningful class names matching the section content.
+Add a placeholder alt attribute to any &lt;img&gt; elements.</pre>
+    </div>
+
+    <!-- Chat to file bridge -->
+    <div class="rule mb48 rev"></div>
+    <div class="label rev">From Copilot's chat to a real file</div>
+    <p class="body-md mt16 mb32 rev" data-d="1">Copilot's response appears as text in a chat window — it is not automatically a file on your computer. Here's how to turn it into one:</p>
+    <div class="flow mb24 rev" data-d="2">
+      <div class="flow-step on">
+        <div class="flow-n">1</div>
+        <div>
+          <h4>Copy the code block</h4>
+          <p>In Copilot's response, find the code block (it will be in a box, usually with a "Copy" button in the corner). Click Copy, or select all the text inside the box and copy it manually.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">2</div>
+        <div>
+          <h4>Open a plain text editor</h4>
+          <p>Notepad (Windows), TextEdit (Mac, switch to Plain Text mode via Format menu), or VS Code if you have it.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">3</div>
+        <div>
+          <h4>Paste and save as index.html</h4>
+          <p>Save the file with the exact name <code>index.html</code> — not <code>index.txt</code> or <code>index.html.txt</code>. On Mac TextEdit, use "Save As" and manually type the <code>.html</code> extension; on Windows Notepad, change "Save as type" to "All Files" so it does not add <code>.txt</code> automatically.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">4</div>
+        <div>
+          <h4>Upload it</h4>
+          <p>This is the file you'll upload to GitHub in the Setup Lab's Step 3.</p>
+        </div>
+      </div>
+    </div>
+    <p class="body-sm rev">You'll repeat this same copy → paste → save process for <span class="accent">style.css</span> and <span class="accent">script.js</span> in later weeks — same idea, different filename and extension.</p>
+  </div>
+</section>
+
+
+<!-- ═════════════════════════════════════════════════ LAYER 1 / CHECKLIST -->
+<section class="section" id="layer1-checklist" data-title="Layer 1 / Checklist">
+  <div class="inner">
+    <h2 class="d-sm mb32 rev">Evaluating<br>Your Layer 1 Output</h2>
+    <p class="body-md mb32 rev" data-d="1">Before you move to Layer 2, verify your skeleton against this checklist.</p>
+    <div class="check-grid rev" data-d="2">
+      <div class="check-col">
+        <div class="check-head bad">✗ Reject if you see this</div>
+        <div class="check-item bad"><span class="ci">✗</span>Any <code>style=</code> attribute in the HTML</div>
+        <div class="check-item bad"><span class="ci">✗</span>Any <code>&lt;style&gt;</code> block in the <code>&lt;head&gt;</code></div>
+        <div class="check-item bad"><span class="ci">✗</span>Any colour values — #XXXXXX anywhere</div>
+        <div class="check-item bad"><span class="ci">✗</span>Any <code>font-family</code> references</div>
+        <div class="check-item bad"><span class="ci">✗</span>Divs used instead of semantic elements</div>
+        <div class="check-item bad"><span class="ci">✗</span>Sections without class names</div>
+        <div class="check-item bad"><span class="ci">✗</span>Missing <code>alt</code> attributes on images</div>
+      </div>
+      <div class="check-col">
+        <div class="check-head good">✓ Accept when you see this</div>
+        <div class="check-item good"><span class="ci">✓</span><code>&lt;header&gt;</code>, <code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code>, <code>&lt;section&gt;</code>, <code>&lt;footer&gt;</code> all present</div>
+        <div class="check-item good"><span class="ci">✓</span>Sections have class names matching their content</div>
+        <div class="check-item good"><span class="ci">✓</span>One <code>&lt;h1&gt;</code> per page, <code>&lt;h2&gt;</code> inside sections</div>
+        <div class="check-item good"><span class="ci">✓</span>All links use <code>&lt;a href="#"&gt;</code> placeholder</div>
+        <div class="check-item good"><span class="ci">✓</span>Images have <code>alt=""</code> attributes</div>
+        <div class="check-item good"><span class="ci">✓</span>No inline styles anywhere</div>
+        <div class="check-item good"><span class="ci">✓</span>Opens in browser as plain, readable, unstyled HTML</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ GITHUB -->
+<section class="section" id="github" data-title="GitHub Pages">
+  <div class="inner">
+    <h2 class="d-md mb16 rev">Your Live<br><span class="accent">Website Address</span></h2>
+    <p class="body-lg mb40 rev" data-d="2">GitHub Pages turns a GitHub repository into a live website. Free. No server setup. Your site is live in under two minutes.</p>
+
+    <div class="url-box mb16 rev" data-d="2">
+      <span class="url-dim">https://</span><span class="url-hi">yourusername</span><span class="url-dim">.github.io</span>
+    </div>
+    <p class="body-sm mb40 rev">← This is what you submit for Assessment 2</p>
+
+    <div class="gh-steps rev" data-d="3">
+      <div class="gh-step">
+        <div class="gh-n">1</div>
+        <div>
+          <h3>Create a GitHub account</h3>
+          <p>github.com → Sign up. Use your Bond email. Choose a professional username — this becomes part of your URL.</p>
+        </div>
+      </div>
+      <div class="gh-step">
+        <div class="gh-n">2</div>
+        <div>
+          <h3>Create a new repository</h3>
+          <p>New repository → name it exactly <code>yourusername.github.io</code> (replace <code>yourusername</code> with your actual GitHub username) → Public → Add README → Create repository. This exact naming is what makes GitHub Pages publish your site at the root of your username, not at a sub-path — this is the same repo you already created in the Week 9 lab, not a second one.</p>
+        </div>
+      </div>
+      <div class="gh-step">
+        <div class="gh-n">3</div>
+        <div>
+          <h3>Upload your files</h3>
+          <p>Add file → Upload files. Upload your index.html first. Then style.css and script.js as they are created each week.</p>
+        </div>
+      </div>
+      <div class="gh-step">
+        <div class="gh-n">4</div>
+        <div>
+          <h3>Enable GitHub Pages</h3>
+          <p>Settings → Pages → Source: main branch → folder: / (root) → Save. Your URL appears within 60 seconds.</p>
+        </div>
+      </div>
+      <div class="gh-step">
+        <div class="gh-n">5</div>
+        <div>
+          <h3>Visit your live URL</h3>
+          <p>Copy the URL. Open it in a new tab. Your HTML skeleton is now live on the internet. Share it with no one until it looks right.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ CHECK-IN -->
+<section class="section" id="checkin" data-title="Check-In">
+  <div class="inner">
+    <h2 class="d-sm mb40 rev">Are you<br>on track?</h2>
+    <div class="checkin-list mb64">
+      <div class="checkin-item rev" data-d="1">
+        <span class="checkin-n">01</span>
+        <div>
+          <h3>GitHub account and repository created?</h3>
+          <p>github.com → signed in → repo exists → it is Public</p>
+        </div>
+      </div>
+      <div class="checkin-item rev" data-d="2">
+        <span class="checkin-n">02</span>
+        <div>
+          <h3>Layer 1 prompt run in Copilot?</h3>
+          <p>The output should be HTML only — no CSS, no inline styles anywhere.</p>
+        </div>
+      </div>
+      <div class="checkin-item rev" data-d="3">
+        <span class="checkin-n">03</span>
+        <div>
+          <h3>index.html uploaded and GitHub Pages enabled?</h3>
+          <p>Visit your URL — your skeleton should be live and visible in the browser. Week 10 Lab will build Layer 2 directly onto this skeleton. Your repo must exist before next week.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════ CHECK-IN / CONCEPTS -->
+<section class="section" id="checkin-concepts" data-title="Key Concepts">
+  <div class="inner">
+    <h2 class="d-sm mb40 rev">Key Concepts<br>Recap</h2>
+    <div class="concepts-grid rev" data-d="1">
+      <div class="concept-cell">
+        <span class="concept-n">01</span>
+        <div>
+          <div class="concept-title">Phase 2 is different</div>
+          <p class="concept-body">You are the director, not the designer. Copilot writes. You prompt, evaluate, and refine.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">02</span>
+        <div>
+          <div class="concept-title">HTML / CSS / JS</div>
+          <p class="concept-body">Structure, style, behaviour. Three files. One website. Copilot handles all three — you understand what each one does.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">03</span>
+        <div>
+          <div class="concept-title">The layered method</div>
+          <p class="concept-body">Build in four focused layers. Never mix concerns. Structure before styling. Styling before responsiveness.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">04</span>
+        <div>
+          <div class="concept-title">Layer 1 is HTML only</div>
+          <p class="concept-body">No CSS. No inline styles. Semantic elements — header, nav, main, section, footer. One h1 per page.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">05</span>
+        <div>
+          <div class="concept-title">Evaluate before proceeding</div>
+          <p class="concept-body">Check every output against the rejection checklist before moving to the next layer. Garbage in, garbage out.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">06</span>
+        <div>
+          <div class="concept-title">GitHub Pages</div>
+          <p class="concept-body">Free hosting. Your live URL is yourusername.github.io/repo-name. This is what you submit for Assessment 2.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ NEXT -->
+<section class="section" id="next" data-title="Next Week">
+  <div class="inner">
+    <div class="label rev">Completed ✓</div>
+    <h2 class="d-lg mb48 rev" data-d="1">Forum Nine<br>Complete.</h2>
+
+    <div class="next-card rev" data-d="2">
+      <div class="next-tag">Week 10 →</div>
+      <h3>Styling with Copilot</h3>
+      <p>Layer 2 — colour, typography, and spacing. Your Figma design system becomes CSS. The comparison method in full. Side-by-side: Figma and browser.</p>
+      <div class="label mb16">Before next week</div>
+      <div class="before-list">
+        <div class="before-item">GitHub repo created and public</div>
+        <div class="before-item">index.html uploaded and on GitHub Pages</div>
+        <div class="before-item">HTML skeleton passes the Layer 1 checklist</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Footer -->
+<footer>
+  <div class="footer-brand">DIGM11-110 <span>·</span> Bond University</div>
+  <div class="footer-info">Week 9 · Building Structure with Copilot · 2026</div>
+</footer>
+
+
+<script>
+/* ── CURSOR ────────────────────────────────────────────────────── */
+const cursor = document.getElementById('cursor');
+let mx = 0, my = 0, cx = 0, cy = 0;
+const hasHover = window.matchMedia('(hover: hover)').matches;
+if (hasHover) {
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; }, { passive: true });
+  (function raf() {
+    cx += (mx - cx) * 0.16;
+    cy += (my - cy) * 0.16;
+    cursor.style.transform = `translate(${cx - 10}px,${cy - 10}px)`;
+    requestAnimationFrame(raf);
+  })();
+  document.querySelectorAll('a,button').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+  });
+} else {
+  cursor.style.display = 'none';
+}
+
+/* ── PROGRESS BAR ──────────────────────────────────────────────── */
+const fill = document.getElementById('progressFill');
+window.addEventListener('scroll', () => {
+  const max = document.body.scrollHeight - window.innerHeight;
+  fill.style.transform = 'scaleX(' + (max > 0 ? window.scrollY / max : 0) + ')';
+}, { passive: true });
+
+/* ── SLIDE NAV + COUNTER ───────────────────────────────────────────── */
+const slides = [...document.querySelectorAll('#hero, .section')];
+const navEl  = document.getElementById('slide-nav');
+const curEl  = document.getElementById('counter-cur');
+const totEl  = document.getElementById('counter-total');
+const TOTAL  = slides.length;
+totEl.textContent = String(TOTAL).padStart(2, '0');
+
+// Disabling snap for the duration of a programmatic jump avoids a Chrome
+// quirk where scroll-snap-type: mandatory can fight a JS-triggered smooth
+// scrollIntoView (most visible on keyboard nav) and refuse to move.
+function goToSlide(target) {
+  document.documentElement.style.scrollSnapType = 'none';
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const restore = () => { document.documentElement.style.scrollSnapType = ''; };
+  if ('onscrollend' in window) {
+    window.addEventListener('scrollend', restore, { once: true });
+  } else {
+    setTimeout(restore, 700);
+  }
+}
+
+slides.forEach((slide, i) => {
+  const title = slide.dataset.title || 'Section ' + (i + 1);
+  const dot   = document.createElement('div');
+  dot.className = 'nav-dot';
+  dot.setAttribute('aria-label', title);
+  dot.innerHTML = '<span class="nav-dot-label">' + title + '</span><div class="nav-dot-pip"></div>';
+  dot.addEventListener('click', () => goToSlide(slide));
+  navEl.appendChild(dot);
+});
+const navDots = [...navEl.querySelectorAll('.nav-dot')];
+
+// rootMargin (not a fixed area-ratio threshold) so this tracks correctly
+// whether a slide is one viewport tall or several — it fires when the
+// slide's edge crosses the viewport's centre band, not by % of its own area.
+const slideIO = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = slides.indexOf(entry.target);
+      slides.forEach(s => s.classList.remove('is-active'));
+      entry.target.classList.add('is-active');
+      navDots.forEach((d, i) => d.classList.toggle('active', i === idx));
+      curEl.textContent = String(idx + 1).padStart(2, '0');
+    }
+  });
+}, { rootMargin: '-45% 0px -45% 0px' });
+slides.forEach(s => slideIO.observe(s));
+
+document.addEventListener('keydown', e => {
+  const active = slides.findIndex(s => s.classList.contains('is-active'));
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+    e.preventDefault();
+    const next = slides[Math.min(active + 1, TOTAL - 1)];
+    if (next) goToSlide(next);
+  }
+  if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+    e.preventDefault();
+    const prev = slides[Math.max(active - 1, 0)];
+    if (prev) goToSlide(prev);
+  }
+});
+
+slides[0].classList.add('is-active');
+navDots[0] && navDots[0].classList.add('active');
+
+/* ── REVEAL ON SCROLL ───────────────────────────────────────────── */
+const prefersMotion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (prefersMotion) {
+  const revealIO = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); revealIO.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.rev').forEach(el => revealIO.observe(el));
+} else {
+  document.querySelectorAll('.rev').forEach(el => el.classList.add('in'));
+}
+</script>
+</body>
+</html>

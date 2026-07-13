@@ -1,0 +1,584 @@
+<!--
+  DIGM11-110 — CoPilot Prompting Guide (Phase 2 Reference, Weeks 9–11)
+  Built by Terry from copilot_prompting_guide_final.md (Prof, 3 July 2026).
+
+  Editorial notes for Prof/Terry (not rendered to students):
+  - Header date range "Weeks 9 to 11" confirmed correct by Wayne on 2026-07-03.
+  - Comparison Method table: 4 right-hand cells were reconstructed from a source PDF
+    that cut off mid-word. Flagged inline in the page itself (see the note above that
+    table) rather than hidden — verify against the original PDF/source if one turns up.
+  - Pending per the source doc: Wayne's live Copilot test may surface more fixes to
+    fold in — check with Prof before treating this file as fully final.
+  - This is a reference page (kept open while prompting Copilot), not a presentation —
+    built without week9_forum.html's scroll-snap/custom-cursor/grain chrome, though it
+    reuses the same design tokens and components for visual consistency across weeks.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGM11-110 — CoPilot Prompting Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS (matches week9_forum.html) ──────────────────────────── */
+:root {
+  --bg:       #0C0C0C;
+  --accent:   #c6fe7f;
+  --text:     #F0EFEB;
+  --muted:    #777777;
+  --surface:  #111111;
+  --border:   rgba(240,239,235,0.08);
+  --red:      #ff4d4d;
+  --warn:     #f5c56b;
+  --max-w:    1200px;
+  --pad:      clamp(24px, 5vw, 80px);
+  --nav-h:    60px;
+  --font-d:   'Barlow Condensed', sans-serif;
+  --font-b:   'Barlow', sans-serif;
+  --font-m:   'Fira Mono', 'SF Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; background: var(--bg); }
+body {
+  font-family: var(--font-b);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ── NAV (sticky, no scroll-snap chrome) ────────────────────────── */
+nav {
+  position: sticky; top: 0; z-index: 500;
+  height: var(--nav-h); padding: 0 var(--pad);
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  background: rgba(12,12,12,.92);
+}
+.nav-label {
+  font-family: var(--font-d); font-size: 13px; font-weight: 600;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+  white-space: nowrap;
+}
+.nav-label span { color: var(--accent); }
+.nav-links { list-style: none; display: flex; gap: clamp(14px, 2vw, 28px); align-items: center; }
+.nav-links a {
+  font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); position: relative; transition: color .2s;
+}
+.nav-links a:hover { color: var(--accent); }
+.nav-toggle {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: none; cursor: pointer; padding: 4px;
+}
+.nav-toggle span { display: block; width: 22px; height: 1.5px; background: var(--text); transition: transform .3s, opacity .3s; }
+.nav-toggle.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.nav-toggle.open span:nth-child(2) { opacity: 0; }
+.nav-toggle.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+@media (max-width: 860px) {
+  .nav-links {
+    position: fixed; top: var(--nav-h); left: 0; right: 0;
+    flex-direction: column; gap: 0;
+    background: rgba(10,10,10,.97); border-bottom: 1px solid var(--border);
+    padding: 20px 0; z-index: 499;
+    transform: translateY(-110%); opacity: 0;
+    transition: transform .3s, opacity .3s; pointer-events: none;
+  }
+  .nav-links.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .nav-links li { width: 100%; text-align: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .nav-links li:last-child { border-bottom: none; }
+  .nav-links a { font-size: 13px; }
+  .nav-toggle { display: flex; }
+}
+
+/* ── LAYOUT ──────────────────────────────────────────────────────── */
+.section { padding: 64px var(--pad); border-bottom: 1px solid var(--border); }
+.section:last-of-type { border-bottom: none; }
+.inner { max-width: var(--max-w); margin: 0 auto; width: 100%; }
+
+/* ── TYPOGRAPHY ──────────────────────────────────────────────────── */
+.label {
+  font-size: 10px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 18px;
+  display: flex; align-items: center; gap: 10px;
+}
+.label::before { content: ''; display: block; width: 20px; height: 1px; background: var(--accent); flex-shrink: 0; }
+.d-xl { font-family: var(--font-d); font-size: clamp(48px, 8vw, 96px); font-weight: 900; line-height: .92; letter-spacing: -.02em; text-transform: uppercase; color: var(--text); }
+.d-lg { font-family: var(--font-d); font-size: clamp(32px, 4.5vw, 56px); font-weight: 800; line-height: .96; letter-spacing: -.015em; text-transform: uppercase; color: var(--text); }
+.d-md { font-family: var(--font-d); font-size: clamp(24px, 3vw, 36px); font-weight: 700; line-height: 1; text-transform: uppercase; color: var(--text); }
+.accent { color: var(--accent); }
+.body-lg { font-size: clamp(21px, 1.8vw, 25px); font-weight: 300; line-height: 1.7; color: rgba(240,239,235,.68); }
+.body-md { font-size: 20px; font-weight: 400; line-height: 1.75; color: rgba(240,239,235,.62); }
+.body-sm { font-size: 17px; font-weight: 400; line-height: 1.7; color: var(--muted); }
+
+.mt8 { margin-top: 8px; } .mt16 { margin-top: 16px; } .mt24 { margin-top: 24px; }
+.mt32 { margin-top: 32px; } .mt40 { margin-top: 40px; } .mt48 { margin-top: 48px; }
+.mb16 { margin-bottom: 16px; } .mb24 { margin-bottom: 24px; } .mb32 { margin-bottom: 32px; }
+
+.rule { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+/* ── HERO BLOCK (page title, not full-screen) ───────────────────── */
+.page-hero { padding: 56px var(--pad) 48px; border-bottom: 1px solid var(--border); }
+.hero-eyebrow {
+  font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 18px; display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::before { content: ''; display: block; width: 20px; height: 1px; background: var(--accent); }
+.hero-sub { font-size: clamp(18px, 1.7vw, 22px); font-weight: 300; color: rgba(240,239,235,.55); line-height: 1.6; max-width: 640px; margin-top: 20px; }
+
+/* ── STAT ROW ────────────────────────────────────────────────────── */
+.stat-row { display: flex; gap: clamp(28px, 5vw, 64px); flex-wrap: wrap; margin-top: 28px; }
+.stat-num { font-family: var(--font-d); font-size: clamp(32px, 4vw, 52px); font-weight: 800; line-height: 1; color: var(--text); }
+.stat-num span { color: var(--accent); }
+.stat-label { font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+
+/* ── LAYERS OVERVIEW GRID ────────────────────────────────────────── */
+.layers-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+}
+@media (max-width: 900px) { .layers-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 500px) { .layers-grid { grid-template-columns: 1fr; } }
+.layer-cell { background: var(--bg); padding: 24px 20px; }
+.layer-tag { font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.layer-title { font-family: var(--font-d); font-size: 22px; font-weight: 700; text-transform: uppercase; color: var(--text); margin-bottom: 8px; }
+.layer-desc { font-size: 16px; color: rgba(240,239,235,.52); line-height: 1.6; }
+
+/* ── CALLOUT ─────────────────────────────────────────────────────── */
+.callout { border-left: 2px solid var(--accent); padding: 20px 28px; background: rgba(198,254,127,.03); margin-top: 28px; }
+.callout-text { font-size: 18px; color: rgba(240,239,235,.7); line-height: 1.7; }
+.callout.warn { border-left-color: var(--warn); background: rgba(245,197,107,.05); }
+.callout.warn .callout-text { color: rgba(245,197,107,.9); }
+
+/* ── NUM LIST (what-to-include) ─────────────────────────────────── */
+.num-list { display: flex; flex-direction: column; margin-top: 24px; }
+.num-item {
+  display: grid; grid-template-columns: 26px 1fr; gap: 16px; padding: 12px 0;
+  border-bottom: 1px solid var(--border); align-items: start;
+}
+.num-item:first-child { border-top: 1px solid var(--border); }
+.num-item .ci { font-size: 12px; font-weight: 700; color: var(--accent); padding-top: 2px; }
+.num-item p { font-size: 17.5px; color: rgba(240,239,235,.65); line-height: 1.6; }
+
+/* ── CODE BLOCK ──────────────────────────────────────────────────── */
+.code-block { background: #060d06; border: 1px solid rgba(198,254,127,.12); border-radius: 6px; overflow: hidden; font-family: var(--font-m); margin-top: 20px; }
+.code-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; background: rgba(198,254,127,.04); border-bottom: 1px solid rgba(198,254,127,.08);
+}
+.code-dots { display: flex; gap: 5px; }
+.code-dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(240,239,235,.12); }
+.code-file { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-family: var(--font-b); }
+.code-block pre { padding: 18px; font-size: 16px; line-height: 1.85; color: rgba(240,239,235,.75); overflow-x: auto; white-space: pre-wrap; }
+.v { color: #fca5a5; } /* placeholder value */
+.c { color: var(--muted); font-style: italic; } /* comment */
+
+/* ── DATA TABLE ──────────────────────────────────────────────────── */
+.dtable { display: flex; flex-direction: column; margin-top: 24px; }
+.drow { display: grid; grid-template-columns: 220px 1fr; gap: 24px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.drow:first-child { border-top: 1px solid var(--border); }
+.drow.head { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding-bottom: 10px; }
+.drow .dcheck { font-size: 17.5px; font-weight: 600; color: var(--text); }
+.drow .dfix { font-size: 17.5px; color: rgba(240,239,235,.6); line-height: 1.65; }
+.drow .dfix .unverified { color: var(--warn); }
+
+/* ── CHECKLIST ───────────────────────────────────────────────────── */
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 32px; margin-top: 24px; }
+@media (max-width: 700px) { .check-grid { grid-template-columns: 1fr; } }
+.check-item {
+  display: flex; align-items: flex-start; gap: 10px; padding: 10px 0;
+  border-bottom: 1px solid var(--border); font-size: 17.5px; color: rgba(240,239,235,.7); line-height: 1.5;
+}
+.check-item .ci { font-size: 12px; font-weight: 700; color: var(--accent); flex-shrink: 0; margin-top: 1px; width: 16px; text-align: center; }
+
+/* ── PRESENTATION TIPS ───────────────────────────────────────────── */
+.tip-block { border-left: 2px solid var(--border); padding: 16px 24px; margin-top: 16px; }
+.tip-block h4 { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 6px; }
+.tip-block p { font-size: 17.5px; color: rgba(240,239,235,.6); line-height: 1.7; }
+.closing-quote {
+  font-family: var(--font-d); font-size: clamp(26px, 3.1vw, 42px); font-weight: 600;
+  line-height: 1.35; color: var(--text); margin-top: 32px; max-width: 820px;
+}
+.closing-quote .accent { display: block; }
+
+footer { padding: 40px var(--pad) 60px; }
+footer p { font-size: 11px; color: var(--muted); line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<nav id="mainNav">
+  <div class="nav-label">DIGM11-110 <span>·</span> COPILOT PROMPTING GUIDE</div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#layers">LAYERS</a></li>
+    <li><a href="#comparison">COMPARISON</a></li>
+    <li><a href="#failures">FAILURES</a></li>
+    <li><a href="#checklist">CHECKLIST</a></li>
+    <li><a href="#presentation">PRESENTATION</a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<header class="page-hero">
+  <div class="inner">
+    <div class="hero-eyebrow">DIGM11-110 · Bond University · Phase 2 Reference</div>
+    <h1 class="d-xl">CoPilot<br>Prompting Guide</h1>
+    <p class="hero-sub">Weeks 9 to 11. Keep this open in a second window while you prompt — every value you use should come from your Figma Assets page, not from memory.</p>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ LAYERED METHOD OVERVIEW ═══════ -->
+<section class="section" id="layers">
+  <div class="inner">
+    <div class="label">The Layered Prompting Method</div>
+    <p class="body-lg" style="max-width:760px;">The single biggest mistake students make is writing one large prompt asking Copilot to build everything at once. The result is always a generic, unstyled page that barely resembles their design. The layered method breaks the build into four distinct stages — each building on the last — and consistently produces results that are far closer to the original Figma mockup.</p>
+
+    <div class="callout">
+      <p class="callout-text">Before you start each layer: open your Figma file. Have your Assets page (Page 04) visible. Every value you prompt Copilot with should come directly from your documented design — not from memory.</p>
+    </div>
+
+    <div class="layers-grid mt48">
+      <div class="layer-cell">
+        <div class="layer-tag">Layer 1</div>
+        <div class="layer-title">Structure</div>
+        <div class="layer-desc">HTML skeleton, no CSS</div>
+      </div>
+      <div class="layer-cell">
+        <div class="layer-tag">Layer 2</div>
+        <div class="layer-title">Styling</div>
+        <div class="layer-desc">Colours, fonts, spacing</div>
+      </div>
+      <div class="layer-cell">
+        <div class="layer-tag">Layer 3</div>
+        <div class="layer-title">Responsive &amp; Accessible</div>
+        <div class="layer-desc">Mobile breakpoints, WCAG basics</div>
+      </div>
+      <div class="layer-cell">
+        <div class="layer-tag">Layer 4</div>
+        <div class="layer-title">Refinement</div>
+        <div class="layer-desc">Fix the gap to your Figma</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ LAYER 1 ════════════════════════ -->
+<section class="section">
+  <div class="inner">
+    <div class="label">Layer 1 — Structure</div>
+    <h2 class="d-lg">Build the HTML skeleton — no styling yet</h2>
+    <p class="body-md mt24" style="max-width:760px;">Describe every section of your homepage in order from top to bottom. Be specific about what each section contains. Do not mention colours, fonts, or sizing in this prompt — that comes in Layer 2. Use semantic HTML5 elements.</p>
+
+    <h3 class="d-md mt48">What to include in your Layer 1 prompt</h3>
+    <div class="num-list">
+      <div class="num-item"><span class="ci">✓</span><p>The page title and navigation structure (logo position, link labels)</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Every section in order: hero, features, about, gallery, testimonials, contact, footer</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>What each section contains: heading, subheading, image, button, card grid, form, etc.</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>The number of columns in any grid layout</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Explicit instruction: semantic HTML5, no CSS</p></div>
+    </div>
+
+    <h3 class="d-md mt48">Layer 1 — Prompt Template</h3>
+    <div class="code-block">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">layer-1-prompt.txt</span></div>
+      <pre>"Build the HTML structure for a <span class="v">[your category]</span> website homepage.
+Use semantic HTML5 elements. Do not add any CSS yet.
+The page should have these sections in this order:
+1. Navigation bar: logo on the left named '<span class="v">[Your Site Name]</span>',
+ links on the right: <span class="v">[Link 1]</span>, <span class="v">[Link 2]</span>, <span class="v">[Link 3]</span>, <span class="v">[Link 4]</span>.
+2. Hero section: a large heading '<span class="v">[Your headline]</span>',
+ a subheading '<span class="v">[Your subheading]</span>', and a button '<span class="v">[CTA text]</span>'.
+3. <span class="v">[Section name]</span>: <span class="v">[describe contents — e.g. three cards each with
+ an image, a heading, and a short paragraph]</span>.
+4. <span class="v">[Continue for each section...]</span>
+5. Footer: <span class="v">[describe footer contents]</span>."</pre>
+    </div>
+
+    <div class="callout">
+      <p class="callout-text">After Layer 1: review the HTML structure in the browser. Does every section exist? Is the order correct? Fix any structural issues before moving to Layer 2 — styling a broken structure makes problems harder to fix, not easier.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ LAYER 2 ════════════════════════ -->
+<section class="section">
+  <div class="inner">
+    <div class="label">Layer 2 — Styling</div>
+    <h2 class="d-lg">Apply your colour system, typography, and spacing</h2>
+    <p class="body-md mt24" style="max-width:760px;">Open your Figma Assets page (Page 04). Every value in this prompt should come directly from your documented design. Copy HEX codes exactly. Use the exact Google Font name. Reference your spacing scale. Do not guess — if you documented it, use it.</p>
+
+    <h3 class="d-md mt48">What to include in your Layer 2 prompt</h3>
+    <div class="num-list">
+      <div class="num-item"><span class="ci">✓</span><p>Exact HEX codes for every colour in your palette — label each one (primary, accent, background, text)</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Font names exactly as they appear on Google Fonts, with weights and sizes for each hierarchy level</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Line-height values for body text and headings</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Section padding (vertical), container max-width, card padding, and gap values</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Button styles: background colour, text colour, border-radius, padding</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Navigation bar styling: background, link colour, height</p></div>
+    </div>
+
+    <h3 class="d-md mt48">Layer 2 — Prompt Template</h3>
+    <div class="code-block">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">layer-2-prompt.txt</span></div>
+      <pre>"Now add CSS styling to the HTML structure. Use these exact values:
+COLOURS:
+ Background: #<span class="v">[your HEX]</span>
+ Primary text: #<span class="v">[your HEX]</span>
+ Accent / brand colour: #<span class="v">[your HEX]</span>
+ Button background: #<span class="v">[your HEX]</span> Button text: #<span class="v">[your HEX]</span>
+ Card background: #<span class="v">[your HEX]</span> Footer background: #<span class="v">[your HEX]</span>
+TYPOGRAPHY (import from Google Fonts):
+ Headings: <span class="v">[Font Name]</span> — H1: <span class="v">[size]</span>px bold, H2: <span class="v">[size]</span>px bold, H3: <span class="v">[size]</span>px semibold
+ Body: <span class="v">[Font Name]</span> — <span class="v">[size]</span>px, line-height <span class="v">[value]</span>
+ Navigation links: <span class="v">[size]</span>px, <span class="v">[weight]</span>, <span class="v">[any letter-spacing]</span>
+ Button label: <span class="v">[size]</span>px <span class="v">[weight]</span>
+SPACING AND LAYOUT:
+ Content container max-width: <span class="v">[value]</span>px, centred with auto margins
+ Section vertical padding: <span class="v">[value]</span>px top and bottom
+ Card padding: <span class="v">[value]</span>px Card gap: <span class="v">[value]</span>px
+ Navigation bar height: <span class="v">[value]</span>px
+BUTTONS: border-radius <span class="v">[value]</span>px, padding <span class="v">[v]</span>px <span class="v">[h]</span>px"</pre>
+    </div>
+
+    <div class="callout">
+      <p class="callout-text">After Layer 2: open your Figma mockup side-by-side with the browser. Compare colours, font sizes, and spacing section by section. Note every discrepancy — you will fix these in Layer 4.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ LAYER 3 ════════════════════════ -->
+<section class="section">
+  <div class="inner">
+    <div class="label">Layer 3 — Responsive &amp; Accessible</div>
+    <h2 class="d-lg">Add mobile breakpoints, collapsing behaviour, and accessibility basics</h2>
+    <p class="body-md mt24" style="max-width:760px;">Refer to your Figma mobile frames. For every section on desktop, you should have already designed how it behaves on mobile. Describe each change explicitly — Copilot needs to know specifically what changes at each breakpoint. This layer also covers accessibility — Week 11's WCAG requirements and Assessment 2's Responsiveness <em>and Accessibility</em> criterion are addressed together here, since they're assessed together.</p>
+
+    <h3 class="d-md mt48">What to include in your Layer 3 prompt</h3>
+    <div class="num-list">
+      <div class="num-item"><span class="ci">✓</span><p>Breakpoint values (e.g. tablet below 768px, mobile below 480px)</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>What happens to the navigation at each breakpoint (hamburger menu, stacked links)</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>What happens to any grid or multi-column layout (e.g. three columns becomes one)</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>What happens to font sizes at mobile width</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Colour contrast requirements (WCAG AA, 4.5:1 for body text)</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Descriptive alt text on every image</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Semantic HTML landmarks and keyboard-navigable interactive elements</p></div>
+    </div>
+
+    <h3 class="d-md mt48">Layer 3 — Prompt Template</h3>
+    <div class="code-block">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">layer-3-prompt.txt</span></div>
+      <pre>"Make this site responsive and accessible.
+
+BREAKPOINTS:
+ Tablet: below <span class="v">[768]</span>px
+ Mobile: below <span class="v">[480]</span>px
+
+NAVIGATION:
+ Below <span class="v">[768]</span>px: replace the horizontal nav links with a hamburger
+ menu icon that toggles a full-width dropdown menu. Menu must be
+ operable by keyboard (Tab and Enter).
+
+LAYOUT:
+ <span class="v">[Section name]</span> grid: <span class="v">[3]</span> columns on desktop becomes <span class="v">[1]</span> column
+ below <span class="v">[480]</span>px. Cards stack vertically with <span class="v">[16]</span>px gap.
+ <span class="v">[Repeat for each multi-column section...]</span>
+
+TYPOGRAPHY:
+ H1 scales from <span class="v">[size]</span>px desktop to <span class="v">[size]</span>px mobile.
+ Body text remains at minimum 16px on all screen sizes.
+
+ACCESSIBILITY:
+ Ensure all body text meets a 4.5:1 contrast ratio against its
+ background (WCAG AA). Add descriptive alt text to every image —
+ describe what the image shows, not the filename. Use semantic
+ landmarks: &lt;nav&gt;, &lt;main&gt;, &lt;header&gt;, &lt;footer&gt;. All interactive
+ elements (links, buttons, menu) must be reachable and usable via
+ keyboard alone."</pre>
+    </div>
+
+    <div class="callout">
+      <p class="callout-text">After Layer 3: test at 1440px and 375px. Tab through the page using only your keyboard — can you reach every link and button? Check contrast using a tool like WebAIM's contrast checker.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ LAYER 4 ════════════════════════ -->
+<section class="section">
+  <div class="inner">
+    <div class="label">Layer 4 — Refinement</div>
+    <h2 class="d-lg">Close the gap between the output and your Figma design</h2>
+    <p class="body-md mt24" style="max-width:760px;">Layer 4 is the most important layer for your grade. This is where you demonstrate critical evaluation — identifying specific gaps between your Figma design and the built output, and prompting precisely to fix them. Vague refinement prompts produce vague results. Be specific.</p>
+
+    <h3 class="d-md mt48">How to write an effective refinement prompt</h3>
+    <div class="num-list">
+      <div class="num-item"><span class="ci">✓</span><p>Identify one specific problem at a time. Do not batch multiple issues into one prompt.</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Describe what IS there, what SHOULD be there, and where it is on the page.</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Reference your Figma design explicitly — "In my Figma mockup the hero has..."</p></div>
+      <div class="num-item"><span class="ci">✓</span><p>Include the exact value you want — colour HEX, pixel size, percentage.</p></div>
+    </div>
+
+    <h3 class="d-md mt48">Layer 4 — Refinement Prompt Examples</h3>
+    <div class="code-block">
+      <div class="code-head"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">layer-4-examples.txt</span></div>
+      <pre><span class="c"># Fixing a colour problem:</span>
+"The hero section has a white background.
+ In my Figma design it should have a full-width background image
+ with a dark overlay. Add a dark overlay at 60% opacity (#000000)
+ over the hero image so the white heading text is clearly readable."
+
+<span class="c"># Fixing a spacing problem:</span>
+"The gap between the three feature cards is too large.
+ In my Figma design the gap between cards is 16px not 32px.
+ Reduce the gap between cards in the card grid to 16px."
+
+<span class="c"># Fixing a typography problem:</span>
+"The navigation links are displaying in the body font (Inter).
+ In my Figma design the nav links should be in uppercase with
+ 2px letter spacing. Add text-transform: uppercase and
+ letter-spacing: 2px to the navigation link CSS."
+
+<span class="c"># Fixing a layout problem:</span>
+"The about section currently has the image on the left and text on
+ the right. In my Figma design it is the opposite — text on the
+ left, image on the right. Please reverse the order."</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ COMPARISON METHOD ═════════════ -->
+<section class="section" id="comparison">
+  <div class="inner">
+    <div class="label">The Comparison Method</div>
+    <h2 class="d-lg">Review every layer the same way</h2>
+    <p class="body-md mt24" style="max-width:760px;">Use this structured approach every time you review a layer. Open your Figma mockup and the browser side by side (50/50 split on your screen) and work through these questions section by section.</p>
+
+    <div class="callout warn">
+      <p class="callout-text">⚠ Extraction note: the right-hand column below was cut off mid-word in the source PDF for all four rows (e.g. "Open DevTools (F12) to insp...", "Measure in Figma usin..."). The completions shown are a best-effort reconstruction, marked <span class="unverified">not verified</span> against the original wording — check against the source PDF if one exists.</p>
+    </div>
+
+    <div class="dtable">
+      <div class="drow head"><div>Check</div><div>What to look for and how to fix it</div></div>
+      <div class="drow">
+        <div class="dcheck">Colours match?</div>
+        <div class="dfix">Compare every background and text colour. If wrong, copy the HEX from Figma <span class="unverified">and re-prompt Copilot with the exact value — do not describe it as a colour name.</span></div>
+      </div>
+      <div class="drow">
+        <div class="dcheck">Fonts correct?</div>
+        <div class="dfix">Check family, size, weight, and letter-spacing. Open DevTools (F12) to inspect <span class="unverified">the computed font-size and family, and compare against your Figma text styles.</span></div>
+      </div>
+      <div class="drow">
+        <div class="dcheck">Spacing correct?</div>
+        <div class="dfix">Check section padding, card gap, and element margins. Measure in Figma using <span class="unverified">the inspect panel, and compare pixel values directly against the live site.</span></div>
+      </div>
+      <div class="drow">
+        <div class="dcheck">Layout matches?</div>
+        <div class="dfix">Check column counts, alignment, and element order. Compare desktop and mobile <span class="unverified">views side by side against your Figma frames.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ COMMON FAILURES ═══════════════ -->
+<section class="section" id="failures">
+  <div class="inner">
+    <div class="label">Common Failures — and How to Fix Them</div>
+    <h2 class="d-lg">When Copilot goes wrong</h2>
+
+    <div class="dtable">
+      <div class="drow head"><div>Problem</div><div>Fix</div></div>
+      <div class="drow"><div class="dcheck">Copilot ignores part of my prompt</div><div class="dfix">Your prompt is too long. Split it into smaller, focused prompts — one section or one concern at a time.</div></div>
+      <div class="drow"><div class="dcheck">The output looks nothing like my design</div><div class="dfix">You described the content but not the style. Return to Layer 2 and add your exact HEX codes, font names, and pixel values.</div></div>
+      <div class="drow"><div class="dcheck">The font is not loading</div><div class="dfix">Make sure you named the Google Font exactly. Check fonts.google.com — "Playfair Display" not "Playfair".</div></div>
+      <div class="drow"><div class="dcheck">Mobile layout is broken</div><div class="dfix">Layer 3 was too vague. Return and describe each section's mobile behaviour explicitly — do not say "make it responsive", say exactly what changes.</div></div>
+      <div class="drow"><div class="dcheck">The hero image is not showing</div><div class="dfix">Copilot uses placeholder images. Replace the src attribute with your actual image file path.</div></div>
+      <div class="drow"><div class="dcheck">Colours are close but not right</div><div class="dfix">You used colour names instead of HEX codes. Always use exact HEX values: #1A1A1A not "dark grey".</div></div>
+      <div class="drow"><div class="dcheck">Cards are not equal height</div><div class="dfix">The card container needs <code>display: flex</code> and the cards need <code>flex: 1</code>. Prompt this specifically.</div></div>
+      <div class="drow"><div class="dcheck">Copilot keeps adding things I did not ask for</div><div class="dfix">Start each prompt with "Only change [specific thing]. Do not modify anything else on the page."</div></div>
+      <div class="drow"><div class="dcheck">Copilot ignores my accessibility instructions</div><div class="dfix">You buried it in a long prompt. Ask for accessibility fixes as their own focused prompt, the same way you would for a colour or spacing fix.</div></div>
+      <div class="drow"><div class="dcheck">My contrast checker is failing</div><div class="dfix">You used a colour combination that looks fine to you but fails WCAG AA. Check every text/background pairing with a contrast tool and adjust the HEX values — do not guess.</div></div>
+      <div class="drow"><div class="dcheck">My site is not keyboard-navigable</div><div class="dfix">Interactive elements are probably styled <code>&lt;div&gt;</code>s instead of real <code>&lt;button&gt;</code>/<code>&lt;a&gt;</code> tags — divs are not keyboard-focusable by default. Ask Copilot to convert them to semantic, focusable elements.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ CHECKLIST ══════════════════════ -->
+<section class="section" id="checklist">
+  <div class="inner">
+    <div class="label">Prompt Quality Checklist</div>
+    <h2 class="d-lg">Before you present</h2>
+
+    <div class="check-grid">
+      <div class="check-item"><span class="ci">✓</span>I have my Figma file open and my Assets page visible</div>
+      <div class="check-item"><span class="ci">✓</span>I am prompting one layer at a time, in order</div>
+      <div class="check-item"><span class="ci">✓</span>All colour values are exact HEX codes from my Figma palette</div>
+      <div class="check-item"><span class="ci">✓</span>All font names match exactly what appears on Google Fonts</div>
+      <div class="check-item"><span class="ci">✓</span>All spacing values are from my 8px spacing scale</div>
+      <div class="check-item"><span class="ci">✓</span>I have described every section in the correct order</div>
+      <div class="check-item"><span class="ci">✓</span>I have tested on both desktop and 375px mobile</div>
+      <div class="check-item"><span class="ci">✓</span>I have compared side-by-side with my Figma mockup</div>
+      <div class="check-item"><span class="ci">✓</span>I have documented every prompt I used (for my AI Declaration)</div>
+      <div class="check-item"><span class="ci">✓</span>I can explain why I made each prompting decision</div>
+      <div class="check-item"><span class="ci">✓</span>I have tested keyboard navigation through the whole page</div>
+      <div class="check-item"><span class="ci">✓</span>I have checked colour contrast on all text/background pairs</div>
+      <div class="check-item"><span class="ci">✓</span>All images have descriptive alt text describing their content</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ FOR YOUR PRESENTATION ═════════ -->
+<section class="section" id="presentation">
+  <div class="inner">
+    <div class="label">For Your Presentation</div>
+    <h2 class="d-lg">Show the process, not just the result</h2>
+    <p class="body-md mt24" style="max-width:760px;">Your presentation should walk through your prompting strategy layer by layer. Show a prompt, show the output, explain what you did next.</p>
+
+    <div class="tip-block">
+      <h4>Be honest about what failed</h4>
+      <p>The most impressive presentations are honest about failures. "This prompt produced this — I then refined it by..." shows genuine critical thinking.</p>
+    </div>
+    <div class="tip-block">
+      <h4>Have your Figma mockup open</h4>
+      <p>Switch between your Figma design and your live site to show the comparison. The gap you closed is the evidence of your skill.</p>
+    </div>
+    <div class="tip-block">
+      <h4>Prepare for follow-up questions</h4>
+      <p>The lecturer will ask you to explain a specific decision. Know why you wrote each key prompt and what you would do differently.</p>
+    </div>
+
+    <p class="closing-quote">The goal is not a perfect website. The goal is a website you can explain, defend, and reflect on critically.
+      <span class="accent">A site that is 80% faithful to your Figma design — with a clear, honest account of how you got there — will always outperform a polished site you cannot explain.</span>
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <p>DIGM11-110 Web Design · Bond University · Phase 2 Reference (Weeks 9–11) · Prepared by Prof, 3 July 2026</p>
+  </div>
+</footer>
+
+<script>
+const navToggle = document.getElementById('navToggle');
+const navLinks  = document.getElementById('navLinks');
+navToggle.addEventListener('click', () => {
+  const open = navLinks.classList.toggle('open');
+  navToggle.classList.toggle('open', open);
+  navToggle.setAttribute('aria-expanded', String(open));
+});
+navLinks.querySelectorAll('a').forEach(a => {
+  a.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    navToggle.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+  });
+});
+</script>
+</body>
+</html>
