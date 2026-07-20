@@ -693,6 +693,12 @@ const LS_KEY = 'digm11110-week10-lab';
 const FORMSPREE_URL = 'https://formspree.io/f/mjgnrwva';
 
 function isDeadlinePassed() { return new Date() >= DEADLINE; }
+function renderDeadlineText() {
+  const fmt = DEADLINE.toLocaleString('en-AU', {timeZone:'Australia/Brisbane', weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit', hour12:true}) + ' AEST';
+  document.getElementById('header-deadline').textContent = 'Deadline: ' + fmt;
+  document.getElementById('hero-deadline-pill').textContent = 'Deadline: ' + fmt;
+}
+renderDeadlineText();
 function applyDeadlineLock() {
   if (!isDeadlinePassed()) return;
   document.getElementById('deadline-banner').style.display = 'block';
