@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGM11-110 — Week 10 Lab Worksheet — Styling with Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@300;400;500;600;700&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS — light worksheet sibling of the Forum system.
+   Same hue family (live green) and type stack, split for a
+   light, fillable-form surface rather than a dark projection.
+   ============================================================ */
+:root {
+  --bg-dark:     #0C0C0C;
+  --surface:     #faf9f5;
+  --card:        #ffffff;
+  --ink:         #17160f;
+  --muted:       #6b6a60;
+  --accent:      #c6fe7f;
+  --accent-ink:  #2f6e16;
+  --accent-dim:  rgba(47,110,22,0.07);
+  --accent-mid:  rgba(47,110,22,0.15);
+  --red:         #c0392b;
+  --red-bg:      rgba(192,57,43,0.07);
+  --amber:       #a6720c;
+  --amber-bg:    rgba(166,114,12,0.09);
+  --border:      rgba(23,22,15,0.12);
+  --radius:      3px;
+  --radius-sm:   2px;
+  --font-d: 'Barlow Condensed', sans-serif;
+  --font-b: 'Barlow', sans-serif;
+  --font-m: 'Fira Mono', 'SF Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-b);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   DEADLINE BANNER
+   ============================================================ */
+#deadline-banner {
+  display: none;
+  position: sticky; top: 0; z-index: 600;
+  background: var(--red); color: #fff;
+  text-align: center; padding: 13px 24px;
+  font-size: 16px; font-weight: 600;
+}
+
+/* ============================================================
+   STICKY HEADER
+   ============================================================ */
+#lab-header {
+  position: sticky; top: 0; z-index: 500;
+  background: var(--bg-dark);
+  border-bottom: 1px solid rgba(198,254,127,0.18);
+  padding: 0 32px;
+}
+.header-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; gap: 24px;
+}
+.header-brand { font-family: var(--font-m); font-size: 13px; color: var(--accent); letter-spacing: .08em; white-space: nowrap; }
+.header-deadline { font-size: 13px; color: rgba(240,239,235,.5); white-space: nowrap; }
+.progress-wrap { flex: 1; max-width: 320px; }
+.progress-top { display: flex; justify-content: space-between; font-size: 13px; color: rgba(240,239,235,.5); margin-bottom: 5px; }
+.progress-pct { color: var(--accent); font-weight: 600; }
+.progress-track { height: 4px; background: rgba(198,254,127,0.12); border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; width: 100%; background: var(--accent); border-radius: 99px; transform: scaleX(0); transform-origin: left; transition: transform .4s ease; }
+.saved-toast { font-size: 12px; color: var(--accent); opacity: 0; transition: opacity .3s; margin-left: 6px; }
+.saved-toast.show { opacity: 1; }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero { background: var(--bg-dark); overflow: hidden; position: relative; }
+.hero-bg-pattern {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(198,254,127,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(198,254,127,.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 80% 30%, black 0%, transparent 70%);
+  mask-image: radial-gradient(ellipse 70% 60% at 80% 30%, black 0%, transparent 70%);
+}
+.hero-inner { max-width: 1100px; margin: 0 auto; padding: 64px 56px; position: relative; z-index: 1; }
+.hero-tag {
+  font-family: var(--font-m); font-size: 12px; color: var(--accent);
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-tag::before { content: ''; width: 20px; height: 1px; background: var(--accent); display: block; }
+.hero-h1 {
+  font-family: var(--font-d); font-size: clamp(32px, 4.6vw, 56px);
+  font-weight: 800; color: #fff; line-height: 1.05; text-transform: uppercase;
+  letter-spacing: -.01em; margin-bottom: 16px;
+}
+.hero-sub { font-size: 17px; color: rgba(255,255,255,.55); line-height: 1.65; max-width: 520px; margin-bottom: 20px; }
+.hero-deadline-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--amber-bg); border: 1px solid rgba(166,114,12,.4);
+  color: #e0a930; font-family: var(--font-m); font-size: 13px;
+  padding: 7px 14px; border-radius: var(--radius-sm); letter-spacing: .02em;
+}
+.hero-deadline-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #e0a930; }
+
+/* ============================================================
+   PAGE BODY
+   ============================================================ */
+.page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 96px; }
+
+/* ============================================================
+   SPACING UTILITIES
+   ============================================================ */
+.mb12 { margin-bottom: 12px; }
+.mb16 { margin-bottom: 16px; }
+.mt14 { margin-top: 14px; }
+.compare-row-head { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.instr-list { padding-left: 20px; font-size: 15px; color: var(--ink); line-height: 2; }
+
+/* ============================================================
+   BANNERS
+   ============================================================ */
+#success-banner {
+  display: none; background: var(--accent-dim); border: 1.5px solid var(--accent-ink);
+  border-radius: var(--radius); padding: 24px 28px; margin-bottom: 28px;
+}
+#success-banner h3 { font-size: 20px; font-weight: 700; color: var(--accent-ink); margin-bottom: 6px; font-family: var(--font-d); text-transform: uppercase; }
+#success-banner p { font-size: 16px; color: #1a3a0e; line-height: 1.6; }
+#success-time { font-size: 14px; color: #2d5a1a; margin-top: 8px; opacity: .8; }
+#error-banner {
+  display: none; background: var(--red-bg); border: 1.5px solid var(--red);
+  border-radius: var(--radius); padding: 18px 22px; margin-bottom: 16px;
+}
+#error-banner p { font-size: 16px; color: var(--red); font-weight: 500; }
+#retry-btn {
+  margin-top: 10px; padding: 8px 20px; background: var(--red); color: #fff; border: none;
+  border-radius: var(--radius-sm); font-family: var(--font-b); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+
+/* ============================================================
+   ID CARD
+   ============================================================ */
+.id-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 28px 32px; margin-bottom: 24px; }
+.id-card-title { font-family: var(--font-d); font-size: 19px; font-weight: 700; text-transform: uppercase; color: var(--ink); margin-bottom: 4px; }
+.id-card-desc { font-size: 15px; color: var(--muted); margin-bottom: 22px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 620px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   FORM FIELDS
+   ============================================================ */
+.field-group { margin-bottom: 0; }
+.field-label { display: block; font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+.req { color: var(--accent-ink); }
+.field-hint { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.field-input {
+  width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-family: var(--font-b); font-size: 16px; color: var(--ink); background: #fff;
+  transition: border-color .15s; outline: none;
+}
+.field-input:focus { border-color: var(--accent-ink); box-shadow: 0 0 0 3px var(--accent-dim); }
+.field-input::placeholder { color: #c4c2b4; }
+textarea.field-input { resize: vertical; min-height: 84px; line-height: 1.6; }
+.field-error { border-color: var(--red) !important; }
+.field-err-msg { font-size: 13px; color: var(--red); margin-top: 4px; display: none; }
+.field-err-msg.show { display: block; }
+
+/* ============================================================
+   SECTION CARDS
+   ============================================================ */
+.ws-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; }
+.ws-card-header { padding: 24px 28px 0; }
+.ws-tag {
+  display: inline-block; font-family: var(--font-m); font-size: 11px; font-weight: 500;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--accent-ink);
+  background: var(--accent-dim); padding: 3px 10px; border-radius: var(--radius-sm); margin-bottom: 10px;
+}
+.ws-title { font-family: var(--font-d); font-size: 21px; font-weight: 700; text-transform: uppercase; color: var(--ink); margin-bottom: 6px; line-height: 1.2; }
+.ws-desc { font-size: 15px; color: var(--muted); line-height: 1.65; margin-bottom: 20px; }
+.ws-body { padding: 0 28px 28px; }
+
+.step-title {
+  font-family: var(--font-d); font-size: 17px; font-weight: 700; text-transform: uppercase;
+  color: var(--ink); margin: 24px 0 10px; display: flex; align-items: center; gap: 8px;
+}
+.step-title:first-child { margin-top: 0; }
+.step-title::before { content: ''; width: 3px; height: 15px; background: var(--accent-ink); border-radius: 1px; flex-shrink: 0; }
+.step-desc { font-size: 14.5px; color: var(--muted); line-height: 1.65; margin-bottom: 14px; }
+
+/* ============================================================
+   DARK CODE PANEL (inset terminal — matches Forum system)
+   ============================================================ */
+.code-panel { background: #060d06; border: 1px solid rgba(198,254,127,.15); border-radius: 4px; overflow: hidden; font-family: var(--font-m); margin-bottom: 16px; }
+.code-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: rgba(198,254,127,.05); border-bottom: 1px solid rgba(198,254,127,.1); }
+.code-dots { display: flex; gap: 5px; }
+.code-dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(240,239,235,.15); }
+.code-file { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #8a897e; font-family: var(--font-b); }
+.code-panel pre { padding: 16px 18px; font-size: 12px; line-height: 1.8; color: rgba(240,239,235,.8); overflow-x: auto; white-space: pre-wrap; }
+.code-panel .v { color: #c6fe7f; }
+.code-panel .c { color: #6b6a60; font-style: italic; }
+
+/* ============================================================
+   TOKEN TABLE (Step 1 colour extraction)
+   ============================================================ */
+.token-table { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.token-row { display: grid; grid-template-columns: 160px 1fr 1fr; gap: 12px; align-items: center; }
+.token-row-head { display: grid; grid-template-columns: 160px 1fr 1fr; gap: 12px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-bottom: 2px; }
+.token-var { font-family: var(--font-m); font-size: 13px; color: var(--accent-ink); }
+@media (max-width: 620px) { .token-row, .token-row-head { grid-template-columns: 1fr; } .token-row-head { display: none; } .token-var { margin-bottom: 2px; } }
+
+/* ============================================================
+   REFERENCE TABLE (read-only — spacing scale)
+   ============================================================ */
+.ref-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+.ref-table th, .ref-table td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+.ref-table th { font-family: var(--font-d); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.ref-table td.mono { font-family: var(--font-m); color: var(--accent-ink); font-size: 12.5px; white-space: nowrap; }
+.ref-table td { color: var(--ink); }
+@media (max-width: 620px) { .ref-table { display: block; overflow-x: auto; white-space: nowrap; } }
+
+/* ============================================================
+   COMPARISON TABLE (Step 6)
+   ============================================================ */
+.compare-row { display: grid; grid-template-columns: 160px 1fr 1fr; gap: 12px; margin-bottom: 10px; align-items: start; }
+.compare-label { font-size: 13px; font-weight: 600; color: var(--ink); padding-top: 10px; }
+@media (max-width: 700px) { .compare-row { grid-template-columns: 1fr; } .compare-label { padding-top: 0; } }
+
+/* ============================================================
+   YES / NO TOGGLE ITEMS
+   ============================================================ */
+.yn-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.yn-item { display: flex; align-items: flex-start; gap: 14px; }
+.yn-label { font-size: 16px; color: var(--ink); line-height: 1.5; flex: 1; padding-top: 2px; }
+.dark-card .yn-label { color: rgba(255,255,255,.9); }
+.yn-toggles { display: flex; gap: 6px; flex-shrink: 0; }
+.yn-btn {
+  padding: 4px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700;
+  cursor: pointer; border: 1.5px solid; letter-spacing: .03em; transition: all .15s;
+  font-family: var(--font-b); background: transparent;
+}
+.yn-btn.yes { border-color: rgba(47,110,22,.35); color: var(--accent-ink); }
+.yn-btn.yes:hover, .yn-btn.yes.active { background: var(--accent-ink); border-color: var(--accent-ink); color: #fff; }
+.yn-btn.no { border-color: rgba(192,57,43,.3); color: var(--red); }
+.yn-btn.no:hover, .yn-btn.no.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* Dark check-in card variant */
+.checkin-card { background: var(--bg-dark); border-radius: var(--radius); border: 1px solid rgba(198,254,127,.2); padding: 26px 30px; margin-bottom: 20px; }
+.checkin-card .ws-tag { background: rgba(198,254,127,.12); color: var(--accent); }
+.checkin-card .ws-title { color: #fff; }
+.checkin-card .ws-desc { color: rgba(255,255,255,.5); }
+.checkin-card .yn-label { color: rgba(255,255,255,.88); font-size: 15.5px; }
+
+/* ============================================================
+   CALLOUT
+   ============================================================ */
+.callout { background: var(--accent-dim); border-left: 3px solid var(--accent-ink); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 14px 18px; margin: 14px 0; font-size: 15px; color: #1e3a10; line-height: 1.65; }
+.callout.amber { background: var(--amber-bg); border-color: var(--amber); color: #5a4008; }
+.callout strong { font-weight: 600; }
+
+/* ============================================================
+   DIVIDER
+   ============================================================ */
+.ws-divider { height: 1px; background: var(--border); margin: 22px 0; }
+
+/* ============================================================
+   SUBMIT SECTION
+   ============================================================ */
+.submit-card { background: var(--bg-dark); border-radius: var(--radius); border: 1px solid rgba(198,254,127,.2); padding: 32px; margin-bottom: 24px; }
+.submit-title { font-family: var(--font-d); font-size: 22px; font-weight: 700; text-transform: uppercase; color: #fff; margin-bottom: 8px; }
+.submit-desc { font-size: 16px; color: rgba(255,255,255,.5); margin-bottom: 24px; line-height: 1.65; }
+.submit-meta { background: rgba(198,254,127,.06); border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 24px; font-size: 15px; color: rgba(255,255,255,.65); line-height: 1.7; }
+.submit-meta ul { padding-left: 18px; }
+.setup-note { font-size: 12.5px; color: #e0a930; background: rgba(166,114,12,.12); border: 1px solid rgba(166,114,12,.3); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 20px; }
+#submit-btn {
+  display: block; width: 100%; padding: 16px; background: var(--accent); color: #0C0C0C;
+  border: none; border-radius: var(--radius-sm); font-family: var(--font-d); font-size: 18px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .02em; cursor: pointer; transition: background .15s;
+}
+#submit-btn:hover { background: #b3ef66; }
+#submit-btn:disabled { background: #556; color: #fff; cursor: not-allowed; }
+#deadline-closed-msg { display: none; background: var(--red-bg); border: 1.5px solid var(--red); border-radius: var(--radius-sm); padding: 16px 20px; color: var(--red); font-size: 16px; font-weight: 600; text-align: center; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 700px) {
+  .hero-inner { padding: 48px 24px; }
+  #lab-header { padding: 0 16px; }
+  .header-inner { flex-wrap: wrap; gap: 10px; }
+  .header-deadline { display: none; }
+  .progress-wrap { max-width: 100%; width: 100%; }
+  .page { padding: 20px 14px 80px; }
+  .id-card { padding: 20px; }
+  .submit-card { padding: 22px; }
+  .checkin-card { padding: 20px; }
+  .ws-card-header, .ws-body { padding-left: 20px; padding-right: 20px; }
+}
+
+/* ============================================================
+   FOCUS
+   ============================================================ */
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+code { font-family: var(--font-m); font-size: .92em; color: var(--accent-ink); }
+</style>
+</head>
+<body>
+
+<div id="deadline-banner">This worksheet's submission window has closed. Contact your lecturer if you believe this is an error.</div>
+
+<header id="lab-header">
+  <div class="header-inner">
+    <div class="header-brand">DIGM11-110 · WEEK 10 LAB</div>
+    <div class="progress-wrap">
+      <div class="progress-top"><span id="progress-text">0 of 0 tasks</span><span><span class="progress-pct" id="progress-pct">0</span>%<span class="saved-toast" id="saved-toast">Saved</span></span></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div class="header-deadline" id="header-deadline">Deadline: TBC</div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-bg-pattern" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="hero-tag">DIGM11-110 · Week 10 Lab</div>
+    <h1 class="hero-h1">Styling with Copilot</h1>
+    <p class="hero-sub">Layer 2 — your Figma design system becomes CSS. Extract your tokens, run your prompt, then compare Figma to your live site section by section.</p>
+    <span class="hero-deadline-pill" id="hero-deadline-pill">Deadline to be confirmed by your lecturer</span>
+  </div>
+</section>
+
+<div class="page">
+
+  <div id="success-banner">
+    <h3>Worksheet submitted</h3>
+    <p>Your Week 10 lab worksheet has been received.</p>
+    <div id="success-time"></div>
+  </div>
+  <div id="error-banner">
+    <p>Something went wrong sending your worksheet. Your answers are still saved on this device.</p>
+    <button id="retry-btn">Try again</button>
+  </div>
+
+  <!-- ID CARD -->
+  <div class="id-card">
+    <div class="id-card-title">Your details</div>
+    <div class="id-card-desc">Used to identify your submission — filled in once, saved automatically.</div>
+    <div class="two-col mb16">
+      <div class="field-group">
+        <label class="field-label" for="f-name">Full name <span class="req">*</span></label>
+        <input class="field-input" type="text" id="f-name" name="student_name" data-save="f-name" placeholder="Your full name">
+        <div class="field-err-msg" id="err-name">Please enter your name.</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="f-sid">Student ID <span class="req">*</span></label>
+        <input class="field-input" type="text" id="f-sid" name="student_id" data-save="f-sid" placeholder="e.g. 12345678">
+        <div class="field-err-msg" id="err-sid">Please enter your student ID.</div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="f-url">My GitHub Pages URL <span class="req">*</span></label>
+      <input class="field-input" type="text" id="f-url" name="github_url" data-save="f-url" placeholder="https://yourusername.github.io">
+      <div class="field-err-msg" id="err-url">Please enter your live GitHub Pages URL (starting with http).</div>
+    </div>
+  </div>
+
+  <!-- TOP CHECK-IN -->
+  <div class="checkin-card">
+    <div class="ws-tag">Before you start</div>
+    <div class="ws-title">Are you ready for Layer 2?</div>
+    <div class="ws-desc">Confirm these before opening Copilot.</div>
+    <div class="yn-list">
+      <div class="yn-item yn-item-group" data-key="ci_01">
+        <div class="yn-label">index.html is live on GitHub Pages</div>
+        <div class="yn-toggles">
+          <button class="yn-btn yes" data-group="ci_01" data-val="yes">YES</button>
+          <button class="yn-btn no" data-group="ci_01" data-val="no">NO</button>
+        </div>
+      </div>
+      <div class="yn-item yn-item-group" data-key="ci_03">
+        <div class="yn-label">Figma file open, with design system visible on Page 04</div>
+        <div class="yn-toggles">
+          <button class="yn-btn yes" data-group="ci_03" data-val="yes">YES</button>
+          <button class="yn-btn no" data-group="ci_03" data-val="no">NO</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PART 1 -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <div class="ws-tag">Part 1</div>
+      <div class="ws-title">Extract Design Tokens from Figma</div>
+      <div class="ws-desc">Open your Figma file to Page 04 — Assets. Read the exact values, don't approximate.</div>
+    </div>
+    <div class="ws-body">
+
+      <div class="step-title">Step 1 — Colour styles</div>
+      <p class="step-desc">Record your Figma style name and its HEX value against each fixed variable name.</p>
+      <div class="token-table">
+        <div class="token-row-head"><span>Variable</span><span>Figma style name</span><span>HEX value</span></div>
+        <div class="token-row"><span class="token-var">--color-primary</span><input class="field-input" type="text" data-save="tok-primary-name" placeholder="Figma style name"><input class="field-input" type="text" data-save="tok-primary-hex" placeholder="#______"></div>
+        <div class="token-row"><span class="token-var">--color-secondary</span><input class="field-input" type="text" data-save="tok-secondary-name" placeholder="Figma style name"><input class="field-input" type="text" data-save="tok-secondary-hex" placeholder="#______"></div>
+        <div class="token-row"><span class="token-var">--color-bg</span><input class="field-input" type="text" data-save="tok-bg-name" placeholder="Figma style name"><input class="field-input" type="text" data-save="tok-bg-hex" placeholder="#______"></div>
+        <div class="token-row"><span class="token-var">--color-text</span><input class="field-input" type="text" data-save="tok-text-name" placeholder="Figma style name"><input class="field-input" type="text" data-save="tok-text-hex" placeholder="#______"></div>
+        <div class="token-row"><span class="token-var">--color-nav-bg</span><input class="field-input" type="text" data-save="tok-navbg-name" placeholder="Figma style name"><input class="field-input" type="text" data-save="tok-navbg-hex" placeholder="#______"></div>
+        <div class="token-row"><span class="token-var">--color-cta</span><input class="field-input" type="text" data-save="tok-cta-name" placeholder="Figma style name"><input class="field-input" type="text" data-save="tok-cta-hex" placeholder="#______"></div>
+        <div class="token-row"><span class="token-var">--color-accent</span><input class="field-input" type="text" data-save="tok-accent-name" placeholder="Figma style name"><input class="field-input" type="text" data-save="tok-accent-hex" placeholder="#______"></div>
+      </div>
+
+      <div class="ws-divider"></div>
+
+      <div class="step-title">Step 2 — Typography</div>
+      <p class="step-desc">From your Figma text styles.</p>
+      <div class="two-col mb12">
+        <div class="field-group"><label class="field-label" for="typ-hfont">Heading font</label><input class="field-input" type="text" id="typ-hfont" data-save="typ-hfont" placeholder="e.g. Playfair Display"></div>
+        <div class="field-group"><label class="field-label" for="typ-bfont">Body font</label><input class="field-input" type="text" id="typ-bfont" data-save="typ-bfont" placeholder="e.g. Inter"></div>
+      </div>
+      <div class="two-col mb12">
+        <div class="field-group"><label class="field-label" for="typ-h1">H1 size</label><input class="field-input" type="text" id="typ-h1" data-save="typ-h1" placeholder="e.g. 48px"></div>
+        <div class="field-group"><label class="field-label" for="typ-h2">H2 size</label><input class="field-input" type="text" id="typ-h2" data-save="typ-h2" placeholder="e.g. 32px"></div>
+      </div>
+      <div class="two-col">
+        <div class="field-group"><label class="field-label" for="typ-body">Body size</label><input class="field-input" type="text" id="typ-body" data-save="typ-body" placeholder="e.g. 16px"></div>
+        <div class="field-group"><label class="field-label" for="typ-lh">Line height</label><input class="field-input" type="text" id="typ-lh" data-save="typ-lh" placeholder="e.g. 1.6"></div>
+      </div>
+
+      <div class="ws-divider"></div>
+
+      <div class="step-title">Step 3 — Spacing values</div>
+      <p class="step-desc">Reference only — the 8px scale is fixed for this course.</p>
+      <table class="ref-table">
+        <thead><tr><th>Value</th><th>Label</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">8px</td><td>Icon padding, tight gaps</td></tr>
+          <tr><td class="mono">16px</td><td>Card padding</td></tr>
+          <tr><td class="mono">24px</td><td>Section padding (mobile)</td></tr>
+          <tr><td class="mono">32px</td><td>Section padding (desktop)</td></tr>
+          <tr><td class="mono">48px</td><td>Large gaps</td></tr>
+          <tr><td class="mono">64px</td><td>Hero padding</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PART 2 -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <div class="ws-tag">Part 2</div>
+      <div class="ws-title">Write and Run Your Layer 2 Prompt</div>
+      <div class="ws-desc">Use the values from Part 1 to fill in the template below, then run it in Copilot.</div>
+    </div>
+    <div class="ws-body">
+      <div class="step-title">Step 4 — The template</div>
+      <p class="step-desc">Copy this into Copilot, replacing every bracket with your own values from Part 1.</p>
+      <div class="code-panel">
+        <div class="code-panel-head"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-file">Layer 2 Prompt Template</span></div>
+        <pre>I already have a complete HTML skeleton for <span class="v">[business name]</span>,
+live at <span class="v">[your GitHub Pages URL]</span>.
+
+Please add a style.css file that applies the following
+design system. Do not change the HTML structure.
+
+<span class="c">Do not add responsiveness yet. Do not add hover states yet.</span>
+<span class="c">Colour, typography, and spacing only.</span>
+
+COLOUR — as CSS custom properties in :root, not hard-coded:
+--color-primary: <span class="v">[HEX]</span>   --color-secondary: <span class="v">[HEX]</span>
+--color-bg: <span class="v">[HEX]</span>      --color-text: <span class="v">[HEX]</span>
+--color-nav-bg: <span class="v">[HEX]</span>   --color-cta: <span class="v">[HEX]</span>
+--color-accent: <span class="v">[HEX]</span>
+
+TYPOGRAPHY:
+Heading font: <span class="v">[font]</span>, H1 <span class="v">[X]</span>px, H2 <span class="v">[X]</span>px
+Body font: <span class="v">[font]</span>, <span class="v">[X]</span>px, line-height <span class="v">[X]</span>
+
+SPACING — 8px scale, as CSS custom properties:
+--space-xs: 4px  --space-sm: 8px  --space-md: 16px
+--space-lg: 24px --space-xl: 32px --space-2xl: 48px --space-3xl: 64px
+
+Apply these to: header/nav background and padding, hero
+section background and heading, button background and
+padding, section padding, and card/content gaps.</pre>
+      </div>
+
+      <div class="ws-divider"></div>
+
+      <div class="step-title">Step 5 — My Layer 2 prompt (filled in)</div>
+      <p class="step-desc">Paste your completed prompt here for your records and your AI Declaration.</p>
+      <textarea class="field-input" data-save="prompt-filled" rows="8" placeholder="Paste your filled-in Layer 2 prompt here..."></textarea>
+    </div>
+  </div>
+
+  <!-- PART 3 -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <div class="ws-tag">Part 3</div>
+      <div class="ws-title">The Comparison Method</div>
+      <div class="ws-desc">Open your Figma mockup and your live site side by side. Section by section.</div>
+    </div>
+    <div class="ws-body">
+      <div class="step-title">Step 6 — Compare section by section</div>
+      <div class="compare-row compare-row-head">
+        <span></span><span>What Figma shows</span><span>What the browser shows</span>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Header / Navigation</div>
+        <input class="field-input" type="text" data-save="cmp-nav-figma" placeholder="What Figma shows">
+        <input class="field-input" type="text" data-save="cmp-nav-browser" placeholder="What the browser shows">
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Hero section</div>
+        <input class="field-input" type="text" data-save="cmp-hero-figma" placeholder="What Figma shows">
+        <input class="field-input" type="text" data-save="cmp-hero-browser" placeholder="What the browser shows">
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Content cards section</div>
+        <input class="field-input" type="text" data-save="cmp-cards-figma" placeholder="What Figma shows">
+        <input class="field-input" type="text" data-save="cmp-cards-browser" placeholder="What the browser shows">
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Second content section</div>
+        <input class="field-input" type="text" data-save="cmp-second-figma" placeholder="What Figma shows">
+        <input class="field-input" type="text" data-save="cmp-second-browser" placeholder="What the browser shows">
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Footer</div>
+        <input class="field-input" type="text" data-save="cmp-footer-figma" placeholder="What Figma shows">
+        <input class="field-input" type="text" data-save="cmp-footer-browser" placeholder="What the browser shows">
+      </div>
+
+      <div class="ws-divider"></div>
+
+      <div class="step-title">Step 7 — Write fix prompts</div>
+      <p class="step-desc">One issue per prompt. Structure: "In style.css, change the [property] of [selector] to [value]. Do not change anything else."</p>
+      <div class="field-group mb12">
+        <label class="field-label" for="fix1">Fix prompt 1</label>
+        <textarea class="field-input" id="fix1" data-save="fix1" rows="3" placeholder="In style.css, change the ... of ... to .... Do not change anything else."></textarea>
+      </div>
+      <div class="field-group mb12">
+        <label class="field-label" for="fix2">Fix prompt 2</label>
+        <textarea class="field-input" id="fix2" data-save="fix2" rows="3" placeholder="In style.css, change the ... of ... to .... Do not change anything else."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="fix3">Fix prompt 3</label>
+        <textarea class="field-input" id="fix3" data-save="fix3" rows="3" placeholder="In style.css, change the ... of ... to .... Do not change anything else."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- PART 4 -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <div class="ws-tag">Part 4</div>
+      <div class="ws-title">Upload to GitHub and Check Live</div>
+      <div class="ws-desc">Push your changes, then verify on the real URL — not just locally.</div>
+    </div>
+    <div class="ws-body">
+      <div class="step-title">Step 8 — Upload</div>
+      <ol class="instr-list">
+        <li>Go to your repository on github.com</li>
+        <li>Add file → Upload files → drag in style.css</li>
+        <li>Commit message: <code>Add Layer 2 CSS styling</code></li>
+        <li>Wait 30–60 seconds for GitHub Pages to rebuild</li>
+        <li>Hard refresh your live URL (Ctrl/Cmd + Shift + R)</li>
+      </ol>
+      <div class="callout amber mt14"><strong>Cache warning:</strong> if your styling doesn't appear, it's almost always a caching issue, not a broken file. Hard refresh before you start debugging.</div>
+
+      <div class="ws-divider"></div>
+
+      <div class="step-title">Step 9 — Self-check</div>
+      <div class="field-group mb12">
+        <label class="field-label" for="sc1">Why CSS custom properties instead of hard-coded values?</label>
+        <textarea class="field-input" id="sc1" data-save="sc1" rows="3"></textarea>
+      </div>
+      <div class="field-group mb12">
+        <label class="field-label" for="sc2">What fonts did you use, and why those?</label>
+        <textarea class="field-input" id="sc2" data-save="sc2" rows="3"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="sc3">Name one section that's still mismatched from Figma.</label>
+        <textarea class="field-input" id="sc3" data-save="sc3" rows="3"></textarea>
+      </div>
+
+      <div class="ws-divider"></div>
+
+      <div class="step-title">Step 10 — AI Declaration reminder</div>
+      <div class="callout">Update your AI Declaration now — Step 3 (the prompt you used) and Step 4 (the material Copilot generated, plus your fix prompts and results). Do this while it's fresh, not the night before Assessment 2.</div>
+    </div>
+  </div>
+
+  <!-- REFLECTION -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <div class="ws-tag">Reflection</div>
+      <div class="ws-title">Before you close this tab</div>
+      <div class="ws-desc">Three honest sentences — this is what a strong AI Declaration is built from.</div>
+    </div>
+    <div class="ws-body">
+      <div class="field-group mb12">
+        <label class="field-label" for="r1">Which section matches your Figma mockup most closely, and why?</label>
+        <textarea class="field-input" id="r1" data-save="r1" rows="3"></textarea>
+      </div>
+      <div class="field-group mb12">
+        <label class="field-label" for="r2">Which section is furthest from matching, and which CSS property is responsible?</label>
+        <textarea class="field-input" id="r2" data-save="r2" rows="3"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="r3">Name one wrong value Copilot used, and how you fixed it.</label>
+        <textarea class="field-input" id="r3" data-save="r3" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM CHECK-IN -->
+  <div class="checkin-card">
+    <div class="ws-tag">Before you submit</div>
+    <div class="ws-title">Final check</div>
+    <div class="yn-list">
+      <div class="yn-item yn-item-group" data-key="bc_01">
+        <div class="yn-label">style.css created with root colour variables</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bc_01" data-val="yes">YES</button><button class="yn-btn no" data-group="bc_01" data-val="no">NO</button></div>
+      </div>
+      <div class="yn-item yn-item-group" data-key="bc_02">
+        <div class="yn-label">Google Fonts linked and loading</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bc_02" data-val="yes">YES</button><button class="yn-btn no" data-group="bc_02" data-val="no">NO</button></div>
+      </div>
+      <div class="yn-item yn-item-group" data-key="bc_03">
+        <div class="yn-label">Styled site live on GitHub Pages (not just local)</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bc_03" data-val="yes">YES</button><button class="yn-btn no" data-group="bc_03" data-val="no">NO</button></div>
+      </div>
+      <div class="yn-item yn-item-group" data-key="bc_04">
+        <div class="yn-label">Comparison documented for at least header and hero</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bc_04" data-val="yes">YES</button><button class="yn-btn no" data-group="bc_04" data-val="no">NO</button></div>
+      </div>
+      <div class="yn-item yn-item-group" data-key="bc_05">
+        <div class="yn-label">Fix prompts written and applied for at least two differences</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bc_05" data-val="yes">YES</button><button class="yn-btn no" data-group="bc_05" data-val="no">NO</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEFORE NEXT WEEK -->
+  <div class="checkin-card">
+    <div class="ws-tag">Before next week</div>
+    <div class="ws-title">Ready for Week 11</div>
+    <div class="yn-list">
+      <div class="yn-item yn-item-group" data-key="bnw_01">
+        <div class="yn-label">Styled site live</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bnw_01" data-val="yes">YES</button><button class="yn-btn no" data-group="bnw_01" data-val="no">NO</button></div>
+      </div>
+      <div class="yn-item yn-item-group" data-key="bnw_02">
+        <div class="yn-label">Comparison notes kept</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bnw_02" data-val="yes">YES</button><button class="yn-btn no" data-group="bnw_02" data-val="no">NO</button></div>
+      </div>
+      <div class="yn-item yn-item-group" data-key="bnw_03">
+        <div class="yn-label">AI Declaration updated</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bnw_03" data-val="yes">YES</button><button class="yn-btn no" data-group="bnw_03" data-val="no">NO</button></div>
+      </div>
+      <div class="yn-item yn-item-group" data-key="bnw_04">
+        <div class="yn-label">WCAG contrast checked at contrast-ratio.com</div>
+        <div class="yn-toggles"><button class="yn-btn yes" data-group="bnw_04" data-val="yes">YES</button><button class="yn-btn no" data-group="bnw_04" data-val="no">NO</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div class="submit-card" id="submit-section">
+    <div class="submit-title">Submit your worksheet</div>
+    <div class="submit-desc">Sends everything above to your lecturer. Your answers stay saved on this device either way.</div>
+    <div class="submit-meta">Make sure your name, student ID, and GitHub Pages URL at the top are filled in before submitting.</div>
+    <button id="submit-btn">Submit Worksheet</button>
+    <div id="deadline-closed-msg">This worksheet is now closed for submissions.</div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+const DEADLINE = new Date('2026-07-21T18:00:00+10:00');
+const LS_KEY = 'digm11110-week10-lab';
+const FORMSPREE_URL = 'https://formspree.io/f/mjgnrwva';
+
+function isDeadlinePassed() { return new Date() >= DEADLINE; }
+function applyDeadlineLock() {
+  if (!isDeadlinePassed()) return;
+  document.getElementById('deadline-banner').style.display = 'block';
+  document.querySelectorAll('input,textarea,select,button').forEach(el => { el.disabled = true; });
+  document.getElementById('submit-btn').style.display = 'none';
+  document.getElementById('deadline-closed-msg').style.display = 'block';
+}
+applyDeadlineLock();
+setInterval(applyDeadlineLock, 60000);
+
+function getSaved() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch(e) { return {}; } }
+function setSaved(data) { localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+let toastTimer;
+function showToast() {
+  const t = document.getElementById('saved-toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+function saveVal(key, val) { const d = getSaved(); d[key] = val; setSaved(d); showToast(); }
+
+function initYNToggles() {
+  const saved = getSaved();
+  document.querySelectorAll('.yn-btn').forEach(btn => {
+    const group = btn.dataset.group, val = btn.dataset.val;
+    if (saved['yn_' + group] === val) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`.yn-btn[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      saveVal('yn_' + group, val);
+      updateProgress();
+    });
+  });
+}
+function initTextFields() {
+  const saved = getSaved();
+  document.querySelectorAll('[data-save]').forEach(el => {
+    const key = el.dataset.save;
+    if (saved[key] !== undefined) el.value = saved[key] || '';
+    const ev = (el.tagName === 'SELECT') ? 'change' : 'input';
+    el.addEventListener(ev, () => { saveVal(key, el.value); updateProgress(); });
+  });
+}
+function initAutoExpand() {
+  document.querySelectorAll('textarea').forEach(ta => {
+    ta.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'; });
+  });
+}
+function updateProgress() {
+  const groups = document.querySelectorAll('.yn-item-group');
+  const fields = document.querySelectorAll('[data-save]');
+  const saved = getSaved();
+  let answered = 0;
+  groups.forEach(g => { if (saved['yn_' + g.dataset.key]) answered++; });
+  fields.forEach(f => { if (saved[f.dataset.save] && saved[f.dataset.save].trim && saved[f.dataset.save].trim() !== '') answered++; });
+  const total = groups.length + fields.length;
+  const pct = total > 0 ? Math.round(answered / total * 100) : 0;
+  document.getElementById('progress-text').textContent = answered + ' of ' + total + ' tasks';
+  document.getElementById('progress-pct').textContent = pct;
+  document.getElementById('progress-fill').style.transform = 'scaleX(' + (pct / 100) + ')';
+}
+
+function validateRequired() {
+  let ok = true;
+  const checks = [
+    {id:'f-name', errId:'err-name', test: v => v.trim().length > 0},
+    {id:'f-sid',  errId:'err-sid',  test: v => v.trim().length > 0},
+    {id:'f-url',  errId:'err-url',  test: v => v.trim().startsWith('http')},
+  ];
+  checks.forEach(c => {
+    const el = document.getElementById(c.id);
+    const err = document.getElementById(c.errId);
+    const pass = el && c.test(el.value);
+    el && el.classList.toggle('field-error', !pass);
+    err && err.classList.toggle('show', !pass);
+    if (!pass) ok = false;
+  });
+  return ok;
+}
+
+function buildSummary(d, saved) {
+  const nl = '\n', div = '─'.repeat(48) + nl;
+  let s = 'DIGM11-110 Week 10 Lab Worksheet' + nl + div;
+  s += 'Name:       ' + (d['student_name'] || '') + nl;
+  s += 'Student ID: ' + (d['student_id'] || '') + nl;
+  s += 'GitHub URL: ' + (d['github_url'] || '') + nl;
+  s += 'Submitted:  ' + (d['submission_timestamp'] || '') + nl + nl;
+  s += div + 'DESIGN TOKENS' + nl + div;
+  ['primary','secondary','bg','text','navbg','cta','accent'].forEach(k => {
+    s += '--color-' + k + ': ' + (d['tok-' + k + '-name'] || '') + ' / ' + (d['tok-' + k + '-hex'] || '') + nl;
+  });
+  s += nl + 'Heading font: ' + (d['typ-hfont']||'') + ' (H1 ' + (d['typ-h1']||'') + ', H2 ' + (d['typ-h2']||'') + ')' + nl;
+  s += 'Body font: ' + (d['typ-bfont']||'') + ' (' + (d['typ-body']||'') + ', line-height ' + (d['typ-lh']||'') + ')' + nl + nl;
+  s += div + 'LAYER 2 PROMPT' + nl + div + (d['prompt-filled']||'') + nl + nl;
+  s += div + 'COMPARISON' + nl + div;
+  [['nav','Header/Navigation'],['hero','Hero'],['cards','Cards'],['second','Second section'],['footer','Footer']].forEach(([k,label]) => {
+    s += label + ' — Figma: ' + (d['cmp-'+k+'-figma']||'') + ' | Browser: ' + (d['cmp-'+k+'-browser']||'') + nl;
+  });
+  s += nl + 'Fix 1: ' + (d['fix1']||'') + nl + 'Fix 2: ' + (d['fix2']||'') + nl + 'Fix 3: ' + (d['fix3']||'') + nl + nl;
+  s += div + 'SELF-CHECK' + nl + div;
+  s += (d['sc1']||'') + nl + nl + (d['sc2']||'') + nl + nl + (d['sc3']||'') + nl + nl;
+  s += div + 'REFLECTION' + nl + div;
+  s += (d['r1']||'') + nl + nl + (d['r2']||'') + nl + nl + (d['r3']||'') + nl + nl;
+  s += div + 'CHECKLISTS' + nl + div;
+  ['ci_01','ci_03','bc_01','bc_02','bc_03','bc_04','bc_05','bnw_01','bnw_02','bnw_03','bnw_04'].forEach(k => {
+    s += k + ': ' + (saved['yn_'+k] || 'not answered') + nl;
+  });
+  return s;
+}
+
+function collectData() {
+  const d = {}, saved = getSaved();
+  document.querySelectorAll('[name][data-save]').forEach(el => { if (el.name) d[el.name] = el.value || ''; });
+  document.querySelectorAll('[data-save]:not([name])').forEach(el => { d[el.dataset.save] = el.value || ''; });
+  document.querySelectorAll('.yn-item-group').forEach(g => { d['yn_' + g.dataset.key] = saved['yn_' + g.dataset.key] || 'not answered'; });
+  d['_worksheet_summary'] = buildSummary(d, saved);
+  return d;
+}
+
+document.getElementById('submit-btn').addEventListener('click', async () => {
+  if (isDeadlinePassed()) { applyDeadlineLock(); return; }
+  if (!validateRequired()) { document.getElementById('f-name').scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  document.getElementById('error-banner').style.display = 'none';
+  const now = new Date();
+  const fd = new FormData();
+  const allData = collectData();
+  allData['submission_timestamp'] = now.toLocaleString('en-AU', {timeZone:'Australia/Brisbane'}) + ' AEST';
+  allData['_worksheet_summary'] = buildSummary(allData, getSaved());
+  fd.append('_worksheet_summary', allData['_worksheet_summary']);
+  Object.entries(allData).forEach(([k,v]) => { if (k !== '_worksheet_summary') fd.append(k, v); });
+  try {
+    const res = await fetch(FORMSPREE_URL, {method:'POST', body:fd, headers:{Accept:'application/json'}});
+    if (res.ok) {
+      document.getElementById('submit-section').style.display = 'none';
+      const sb = document.getElementById('success-banner');
+      sb.style.display = 'block';
+      sb.scrollIntoView({behavior:'smooth',block:'start'});
+      document.getElementById('success-time').textContent = 'Submitted at ' + now.toLocaleString('en-AU',{timeZone:'Australia/Brisbane'}) + ' AEST';
+      document.querySelectorAll('input,textarea,select,button').forEach(el => { el.disabled = true; });
+      const d = getSaved(); d['_submitted'] = true; d['_submitted_at'] = now.toISOString(); setSaved(d);
+    } else { throw new Error(res.status); }
+  } catch(err) {
+    document.getElementById('error-banner').style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Submit Worksheet';
+  }
+});
+document.getElementById('retry-btn').addEventListener('click', () => {
+  document.getElementById('error-banner').style.display = 'none';
+  document.getElementById('submit-btn').click();
+});
+
+(function() {
+  const saved = getSaved();
+  if (saved['_submitted']) {
+    document.getElementById('submit-section').style.display = 'none';
+    const sb = document.getElementById('success-banner');
+    sb.style.display = 'block';
+    if (saved['_submitted_at']) {
+      const d = new Date(saved['_submitted_at']);
+      document.getElementById('success-time').textContent = 'Submitted at ' + d.toLocaleString('en-AU',{timeZone:'Australia/Brisbane'}) + ' AEST';
+    }
+    document.querySelectorAll('input,textarea,select,button').forEach(el => { el.disabled = true; });
+  }
+})();
+
+initYNToggles();
+initTextFields();
+initAutoExpand();
+updateProgress();
+</script>
+</body>
+</html>

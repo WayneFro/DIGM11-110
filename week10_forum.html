@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGM11-110 — Forum Ten: Styling with Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Fira+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ──────────────────────────────────────────────────────── */
+:root {
+  --bg:       #193200;
+  --accent:   #c6fe7f;
+  --text:     #F0EFEB;
+  --muted:    #969696;
+  --surface:  #1f3d08;
+  --border:   rgba(240,239,235,0.08);
+  --red:      #ff4d4d;
+  --max-w:    1200px;
+  --pad:      clamp(24px, 5vw, 80px);
+  --font-d:   'Barlow Condensed', sans-serif;
+  --font-b:   'Barlow', sans-serif;
+  --font-m:   'Fira Mono', 'SF Mono', monospace;
+}
+
+/* ── RESET ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  background: var(--bg);
+}
+body {
+  font-family: var(--font-b);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  cursor: none;
+}
+a { color: inherit; text-decoration: none; }
+img, video { display: block; }
+@media (hover: none) { body { cursor: auto; } }
+
+/* ── GRAIN ───────────────────────────────────────────────────────── */
+.grain {
+  position: fixed; inset: -50%; width: 200%; height: 200%;
+  z-index: 900; pointer-events: none; opacity: .022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .grain { animation: grain .3s steps(1) infinite; }
+}
+@keyframes grain {
+  0%  { transform: translate(0,0); }
+  20% { transform: translate(-4%,-3%); }
+  40% { transform: translate(3%,2%); }
+  60% { transform: translate(-2%,4%); }
+  80% { transform: translate(4%,-1%); }
+}
+
+/* ── BACKGROUND PATTERN (persists across every slide) ───────────────── */
+.bg-pattern {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(240,239,235,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(240,239,235,.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+.bg-pattern::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(to bottom,
+      rgba(25,50,0,.15) 0%,
+      rgba(25,50,0,.05) 25%,
+      rgba(0, 0, 0, 0.55) 65%,
+      rgba(0, 0, 0, 0.98) 100%),
+    radial-gradient(ellipse 90% 65% at 50% 20%, rgba(198,254,127,.06) 0%, transparent 60%);
+}
+
+/* ── CURSOR ──────────────────────────────────────────────────────── */
+.cursor {
+  position: fixed; top: 0; left: 0; z-index: 9999;
+  width: 20px; height: 20px;
+  border: 1.5px solid rgba(198,254,127,.6);
+  border-radius: 50%; pointer-events: none;
+  transition: scale .25s, background .25s, border-color .25s;
+  will-change: transform;
+}
+.cursor.hover { scale: 2.2; background: rgba(198,254,127,.1); border-color: var(--accent); }
+@media (hover: none) { .cursor { display: none; } }
+
+/* ── PROGRESS BAR ────────────────────────────────────────────────── */
+.progress-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 700; height: 2px; }
+.progress-fill { height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .08s linear; }
+
+/* ── SLIDE NAV (right-side dots) ─────────────────────────────────── */
+#slide-nav {
+  position: fixed; right: 32px; top: 50%; transform: translateY(-50%);
+  z-index: 900; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+}
+.nav-dot { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 0; opacity: .4; transition: opacity .25s; }
+.nav-dot:hover { opacity: .8; }
+.nav-dot.active { opacity: 1; }
+.nav-dot-label {
+  font-family: var(--font-m); font-size: 10px; letter-spacing: .08em;
+  color: var(--text); white-space: nowrap;
+  opacity: 0; transform: translateX(8px); transition: opacity .2s, transform .2s;
+}
+.nav-dot:hover .nav-dot-label, .nav-dot.active .nav-dot-label { opacity: 1; transform: translateX(0); }
+.nav-dot-pip { width: 10px; height: 10px; border-radius: 50%; background: var(--text); transform: scale(.6); transition: transform .3s, background .3s; flex-shrink: 0; }
+.nav-dot.active .nav-dot-pip { transform: scale(1); background: var(--accent); }
+
+#section-counter {
+  position: fixed; bottom: 28px; right: 32px; z-index: 900;
+  font-family: var(--font-m); font-size: 11px; letter-spacing: .1em; color: var(--muted);
+}
+#section-counter .cur { color: var(--accent); font-weight: 600; }
+
+@media (max-width: 768px) {
+  #slide-nav { right: 16px; }
+  #section-counter { right: 16px; bottom: 20px; }
+}
+@media (max-width: 520px) {
+  #slide-nav { display: none; }
+}
+
+/* ── SECTION BASE ────────────────────────────────────────────────── */
+.section {
+  min-height: 100vh;
+  padding: 80px var(--pad) 100px;
+  display: flex; flex-direction: column; justify-content: center;
+  scroll-snap-align: start; position: relative;
+}
+.inner { max-width: var(--max-w); margin: 0 auto; width: 100%; }
+
+/* ── TYPOGRAPHY ──────────────────────────────────────────────────── */
+.label {
+  font-size: 10px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.label::before { content: ''; display: block; width: 20px; height: 1px; background: var(--accent); flex-shrink: 0; }
+.d-xl { font-family: var(--font-d); font-size: clamp(72px, 14vw, 200px); font-weight: 900; line-height: .88; letter-spacing: -.02em; text-transform: uppercase; color: var(--text); }
+.d-lg { font-family: var(--font-d); font-size: clamp(52px, 9vw, 130px); font-weight: 800; line-height: .9;  letter-spacing: -.015em; text-transform: uppercase; color: var(--text); }
+.d-md { font-family: var(--font-d); font-size: clamp(36px, 6vw, 80px);  font-weight: 800; line-height: .92; letter-spacing: -.01em;  text-transform: uppercase; color: var(--text); }
+.d-sm { font-family: var(--font-d); font-size: clamp(28px, 4vw, 56px);  font-weight: 700; line-height: .95; letter-spacing: -.005em; text-transform: uppercase; color: var(--text); }
+.accent { color: var(--accent); }
+.body-lg { font-size: clamp(16px, 1.6vw, 20px); font-weight: 300; line-height: 1.7; color: rgba(240,239,235,.68); }
+.body-md { font-size: 15px; font-weight: 400; line-height: 1.75; color: rgba(240,239,235,.6); }
+.body-sm { font-size: 13px; font-weight: 400; line-height: 1.7; color: var(--muted); }
+
+/* ── SPACING UTILS ───────────────────────────────────────────────── */
+.mt8  { margin-top: 8px;  } .mt16 { margin-top: 16px; } .mt24 { margin-top: 24px; }
+.mt32 { margin-top: 32px; } .mt40 { margin-top: 40px; } .mt48 { margin-top: 48px; }
+.mb16 { margin-bottom: 16px; } .mb24 { margin-bottom: 24px; } .mb32 { margin-bottom: 32px; }
+.mb40 { margin-bottom: 40px; } .mb48 { margin-bottom: 48px; } .mb64 { margin-bottom: 64px; }
+
+/* ── RULE ────────────────────────────────────────────────────────── */
+.rule { border: none; border-top: 1px solid var(--border); }
+
+/* ── HERO ────────────────────────────────────────────────────────── */
+#hero {
+  min-height: 100vh; padding: 0; display: flex;
+  align-items: flex-end; overflow: hidden; position: relative;
+  scroll-snap-align: start;
+}
+.hero-bg { position: absolute; inset: 0; z-index: 0; background: var(--bg); overflow: hidden; }
+.hero-ghost {
+  position: absolute; right: -2%; top: 10%;
+  font-family: var(--font-m); font-size: clamp(18px, 3vw, 30px);
+  color: rgba(198,254,127,.08); white-space: nowrap; letter-spacing: -.01em;
+  transform: rotate(-4deg);
+}
+.hero-ghost.two { top: 22%; right: 6%; color: rgba(198,254,127,.05); font-size: clamp(14px, 2.2vw, 22px); }
+.hero-content {
+  position: relative; z-index: 1; width: 100%;
+  padding: var(--pad);
+  padding-bottom: clamp(64px, 10vh, 120px);
+  max-width: calc(var(--max-w) + 2 * var(--pad)); margin: 0 auto;
+}
+.hero-eyebrow {
+  font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::before { content: ''; display: block; width: 20px; height: 1px; background: var(--accent); }
+.hero-title {
+  font-family: var(--font-d); font-size: clamp(80px, 16vw, 220px);
+  font-weight: 900; line-height: .86;
+  text-transform: uppercase; letter-spacing: -.025em; color: var(--text);
+  margin-bottom: 28px;
+}
+.hero-meta {
+  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+}
+.hero-sub {
+  font-size: clamp(14px, 1.4vw, 17px); font-weight: 300;
+  color: rgba(240,239,235,.5); line-height: 1.6; max-width: 480px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid rgba(198,254,127,.3); padding: 8px 16px; border-radius: 2px;
+  font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); white-space: nowrap;
+}
+.scroll-hint {
+  position: absolute; bottom: 40px; right: var(--pad); z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  writing-mode: vertical-rl; opacity: .35;
+}
+.scroll-hint span { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.scroll-line {
+  width: 1px; height: 48px; background: rgba(240,239,235,.2); overflow: hidden; position: relative;
+}
+.scroll-line::after {
+  content: ''; position: absolute; top: -100%; left: 0; width: 100%; height: 100%; background: var(--accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-line::after { animation: scrolltick 1.9s ease-in-out infinite; }
+}
+@keyframes scrolltick { 0% { top: -100%; } 100% { top: 200%; } }
+
+/* ── OVERVIEW SECTION ────────────────────────────────────────────── */
+.stat-row { display: flex; gap: clamp(32px, 6vw, 80px); flex-wrap: wrap; }
+.stat-num {
+  font-family: var(--font-d); font-size: clamp(40px, 6vw, 80px); font-weight: 800; line-height: 1;
+  color: var(--text);
+}
+.stat-num span { color: var(--accent); }
+.stat-label { font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+
+/* ── CALLOUT ─────────────────────────────────────────────────────── */
+.callout {
+  border-left: 2px solid var(--accent); padding: 24px 32px;
+  background: rgba(198,254,127,.03);
+}
+.callout-text {
+  font-family: var(--font-d); font-size: clamp(28px, 4vw, 56px);
+  font-weight: 700; line-height: 1.05; text-transform: uppercase; color: var(--text);
+}
+.callout-sub { font-size: 14px; color: rgba(240,239,235,.5); line-height: 1.65; margin-top: 14px; }
+
+/* ── STATEMENT SLIDE ─────────────────────────────────────────────── */
+.statement-slide .callout { max-width: 780px; }
+.statement-slide .callout-text { font-size: clamp(32px, 5vw, 68px); }
+
+/* ── SPLIT GRID ──────────────────────────────────────────────────── */
+.split   { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 5vw, 80px); }
+@media (max-width: 768px) { .split { grid-template-columns: 1fr; gap: 40px; } }
+
+/* ── NUMBERED LIST ───────────────────────────────────────────────── */
+.num-list { display: flex; flex-direction: column; }
+.num-item {
+  display: grid; grid-template-columns: 52px 1fr;
+  gap: 24px; padding: 22px 0;
+  border-bottom: 1px solid var(--border); align-items: start;
+}
+.num-item:first-child { border-top: 1px solid var(--border); }
+.num {
+  font-family: var(--font-d); font-size: 11px; font-weight: 700;
+  letter-spacing: .14em; color: var(--accent); padding-top: 4px;
+}
+.num-item h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.num-item p  { font-size: 13px; color: rgba(240,239,235,.55); line-height: 1.7; }
+
+/* ── VS COMPARISON ───────────────────────────────────────────────── */
+.vs-wrap  { display: grid; grid-template-columns: 1fr 36px 1fr; gap: 0; align-items: start; }
+.vs-mid   { display: flex; justify-content: center; padding-top: 48px; font-family: var(--font-d); font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--muted); }
+.vs-col   { padding: 28px; border: 1px solid var(--border); border-radius: 3px; }
+.vs-col-tag { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+.vs-col h3 { font-family: var(--font-d); font-size: clamp(20px, 2.5vw, 32px); font-weight: 700; text-transform: uppercase; color: var(--text); margin-bottom: 20px; }
+.vs-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.vs-col li { font-size: 13px; color: rgba(240,239,235,.6); line-height: 1.55; padding-left: 14px; position: relative; }
+.vs-col li::before { content: '—'; position: absolute; left: 0; color: rgba(240,239,235,.2); }
+@media (max-width: 700px) { .vs-wrap { grid-template-columns: 1fr; } .vs-mid { padding: 12px 0; font-size: 11px; justify-content: flex-start; } .vs-col { margin-bottom: 12px; } }
+
+/* ── CODE BLOCK ──────────────────────────────────────────────────── */
+.code-block { background: #060d06; border: 1px solid rgba(198,254,127,.12); border-radius: 6px; overflow: hidden; font-family: var(--font-m); }
+.code-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; background: rgba(198,254,127,.04); border-bottom: 1px solid rgba(198,254,127,.08);
+}
+.code-dots { display: flex; gap: 5px; }
+.code-dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(240,239,235,.12); }
+.code-file { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-family: var(--font-b); }
+.code-block pre {
+  padding: 18px 18px; font-size: 12px; line-height: 1.85;
+  color: rgba(240,239,235,.75); overflow-x: auto;
+  white-space: pre; tab-size: 2;
+}
+.code-block pre.wrap { white-space: pre-wrap; }
+.t  { color: var(--accent); }
+.a  { color: #93c5fd; }
+.v  { color: #fca5a5; }
+.p  { color: #c084fc; }
+.c  { color: var(--muted); font-style: italic; }
+
+/* ── FLOW STEPS ──────────────────────────────────────────────────── */
+.flow { display: flex; flex-direction: column; }
+.flow-step {
+  display: grid; grid-template-columns: 48px 1fr;
+  gap: 20px; padding: 20px 0;
+  border-bottom: 1px solid var(--border); align-items: start;
+}
+.flow-step:first-child { border-top: 1px solid var(--border); }
+.flow-n { font-family: var(--font-d); font-size: 28px; font-weight: 800; color: rgba(198,254,127,.2); line-height: 1.05; }
+.flow-step.on .flow-n { color: var(--accent); }
+.flow-step.on h4 { color: var(--accent); }
+.flow-step h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.flow-step p  { font-size: 13px; color: rgba(240,239,235,.5); line-height: 1.6; }
+
+/* ── DIVIDER SLIDE ───────────────────────────────────────────────── */
+.divider-index {
+  display: block; font-family: var(--font-d); font-weight: 900;
+  font-size: clamp(48px, 8vw, 100px); color: rgba(198,254,127,.16);
+  line-height: 1; margin-bottom: 4px;
+}
+
+/* ── LAYER SUB-BLOCK ─────────────────────────────────────────────── */
+.sub-tag { font-family: var(--font-m); font-size: 11px; letter-spacing: .1em; color: var(--accent); margin-bottom: 16px; }
+.constraint-line { font-size: 13px; color: var(--muted); line-height: 1.7; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.constraint-line span { color: var(--text); }
+
+/* ── SPEC TABLE ──────────────────────────────────────────────────── */
+.spec-table { width: 100%; border-collapse: collapse; }
+.spec-table th, .spec-table td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.spec-table th { font-family: var(--font-d); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; border-bottom: 2px solid var(--border); }
+.spec-table td { color: rgba(240,239,235,.6); }
+.spec-table td.mono { font-family: var(--font-m); color: var(--accent); font-size: 12.5px; white-space: nowrap; }
+@media (max-width: 700px) { .spec-table { display: block; overflow-x: auto; white-space: nowrap; } }
+
+/* ── FAIL ITEM ───────────────────────────────────────────────────── */
+.fail-item { display: grid; grid-template-columns: 24px 1fr; gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--border); align-items: start; }
+.fail-item:first-child { border-top: 1px solid var(--border); }
+.fail-mark { font-family: var(--font-d); font-weight: 800; font-size: 22px; color: var(--muted); line-height: 1.2; }
+.fail-item h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+.fail-fix { font-family: var(--font-m); font-size: 12px; color: rgba(240,239,235,.6); line-height: 1.75; background: rgba(240,239,235,.025); padding: 12px 16px; border: 1px solid var(--border); border-radius: 3px; }
+.fail-fix::before { content: '→ '; color: var(--accent); }
+
+/* ── PLAYGROUND WIDGET ───────────────────────────────────────────── */
+.playground { border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.playground-mock {
+  --pg-color: #c6fe7f; --pg-size: 32px;
+  background: var(--surface); padding: clamp(24px, 4vw, 48px); min-height: 240px;
+}
+.pg-nav { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; margin-bottom: 24px; border-bottom: 1px solid rgba(240,239,235,.08); }
+.pg-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-d); font-weight: 800; font-size: 14px; color: var(--text); text-transform: uppercase; }
+.pg-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pg-color); transition: background .2s; }
+.pg-links { display: flex; gap: 20px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: rgba(240,239,235,.4); }
+.pg-hero { text-align: left; }
+.pg-h1 { font-family: var(--font-d); font-weight: 800; text-transform: uppercase; color: var(--pg-color); font-size: var(--pg-size); line-height: 1; margin-bottom: 20px; transition: color .2s; }
+.pg-btn { font-family: var(--font-b); font-weight: 600; font-size: 13px; padding: 12px 24px; border-radius: 2px; border: none; background: var(--pg-color); color: #0C0C0C; cursor: default; transition: background .2s; }
+.playground-controls { display: flex; flex-wrap: wrap; gap: 32px; padding: 24px 28px; background: rgba(198,254,127,.02); border-top: 1px solid rgba(198,254,127,.08); }
+.pg-control-group { display: flex; flex-direction: column; gap: 10px; }
+.pg-control-label { font-family: var(--font-m); font-size: 10px; letter-spacing: .08em; color: var(--muted); }
+.pg-swatches { display: flex; gap: 8px; }
+.pg-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; transition: border-color .15s, transform .15s; }
+.pg-swatch:hover { transform: scale(1.1); }
+.pg-swatch.active { border-color: var(--text); }
+.pg-slider-row { display: flex; align-items: center; gap: 12px; min-width: 160px; }
+.pg-slider { -webkit-appearance: none; appearance: none; width: 140px; height: 2px; background: var(--border); outline: none; }
+.pg-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none; }
+.pg-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none; }
+.pg-slider-val { font-family: var(--font-m); font-size: 12px; color: var(--accent); min-width: 36px; }
+@media (max-width: 700px) { .pg-links { display: none; } }
+
+/* ── CHECKIN ─────────────────────────────────────────────────────── */
+.checkin-list { display: flex; flex-direction: column; }
+.checkin-item {
+  display: grid; grid-template-columns: 44px 1fr; gap: 20px;
+  padding: 22px 0; border-bottom: 1px solid var(--border); align-items: start;
+}
+.checkin-item:first-child { border-top: 1px solid var(--border); }
+.checkin-n { font-family: var(--font-d); font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--accent); padding-top: 3px; }
+.checkin-item h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.checkin-item p  { font-size: 13px; color: rgba(240,239,235,.5); line-height: 1.65; }
+
+/* ── KEY CONCEPTS ────────────────────────────────────────────────── */
+.concepts-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+}
+@media (max-width: 700px) { .concepts-grid { grid-template-columns: 1fr; } }
+.concept-cell { background: var(--bg); padding: 28px 24px; display: grid; grid-template-columns: 44px 1fr; gap: 14px; }
+.concept-n { font-family: var(--font-d); font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--accent); padding-top: 3px; }
+.concept-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.concept-body  { font-size: 12.5px; color: rgba(240,239,235,.5); line-height: 1.65; }
+
+/* ── NEXT WEEK CARD ──────────────────────────────────────────────── */
+.next-card {
+  background: rgba(198,254,127,.05); border: 1px solid rgba(198,254,127,.2);
+  border-radius: 4px; padding: 40px;
+}
+.next-tag   { font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+.next-card h3 { font-family: var(--font-d); font-size: clamp(28px, 4vw, 56px); font-weight: 800; text-transform: uppercase; color: var(--text); margin-bottom: 10px; }
+.next-card p  { font-size: 14px; color: rgba(240,239,235,.5); line-height: 1.7; margin-bottom: 28px; }
+.before-list  { display: flex; flex-direction: column; gap: 8px; }
+.before-item  {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; color: rgba(240,239,235,.6);
+}
+.before-item::before { content: '→'; color: var(--accent); font-weight: 600; flex-shrink: 0; font-size: 12px; padding-top: 1px; }
+
+/* ── FOOTER ──────────────────────────────────────────────────────── */
+footer {
+  background: var(--bg); border-top: 1px solid var(--border);
+  padding: 40px var(--pad);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+}
+.footer-brand { font-family: var(--font-d); font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.footer-brand span { color: var(--accent); }
+.footer-info  { font-size: 11px; color: rgba(240,239,235,.2); letter-spacing: .06em; }
+
+/* ── FOCUS ───────────────────────────────────────────────────────── */
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+/* ── CODE IN PROSE ───────────────────────────────────────────────── */
+.body-md code, .body-sm code { font-family: var(--font-m); font-size: 0.9em; color: var(--muted); }
+
+/* ── REVEAL ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .rev { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+  .rev.in { opacity: 1; transform: none; }
+  .rev[data-d="1"] { transition-delay: .08s; }
+  .rev[data-d="2"] { transition-delay: .16s; }
+  .rev[data-d="3"] { transition-delay: .24s; }
+  .rev[data-d="4"] { transition-delay: .32s; }
+}
+</style>
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="bg-pattern" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+
+<div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- Slide nav (right-side dots, built by JS) -->
+<nav id="slide-nav" role="navigation" aria-label="Slide navigation"></nav>
+<div id="section-counter"><span class="cur" id="counter-cur">01</span> / <span id="counter-total">20</span></div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ HERO -->
+<section id="hero" data-title="Welcome">
+  <div class="hero-bg" role="img" aria-hidden="true">
+    <span class="hero-ghost">--color-primary: #c6fe7f;</span>
+    <span class="hero-ghost two">--space-md: 16px;</span>
+  </div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">DIGM11-110 · Bond University</div>
+    <h1 class="hero-title">FORUM<br>TEN</h1>
+    <div class="hero-meta">
+      <p class="hero-sub">Styling with Copilot. Layer 2 begins.</p>
+      <span class="hero-badge">Week 10 · 2026</span>
+    </div>
+  </div>
+  <div class="scroll-hint" aria-hidden="true">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ OVERVIEW -->
+<section class="section" id="overview" data-title="Begins">
+  <div class="inner">
+    <h2 class="d-lg mb32 rev">Layer 2<br><span class="accent">Begins.</span></h2>
+    <div class="split">
+      <div>
+        <p class="body-lg rev" data-d="2">Layer 2 applies your Figma design system to the HTML skeleton. Colour, typography, and spacing become CSS. Your Figma mockup and your browser sit side by side.</p>
+        <div class="stat-row mt40 rev" data-d="3">
+          <div>
+            <div class="stat-num">Week <span>9</span></div>
+            <div class="stat-label">Layer 1 HTML Skeleton</div>
+          </div>
+          <div>
+            <div class="stat-num"><span>21</span></div>
+            <div class="stat-label">July 2026</div>
+          </div>
+        </div>
+      </div>
+      <div class="rev" data-d="3">
+        <div class="callout">
+          <p class="callout-text">Let's jump in <span class="accent">→</span></p>
+          <p class="callout-sub">This week marks Layer 2. Your Figma design system becomes CSS — colour, typography, and spacing, compared side by side.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════ REVIEW A -->
+<section class="section" id="review" data-title="Review">
+  <div class="inner">
+    <div class="label rev">Review ← Week 9</div>
+    <h2 class="d-md mb40 rev" data-d="1">Last Week:<br>Building Structure with Copilot</h2>
+    <div class="num-list">
+      <div class="num-item rev" data-d="1">
+        <span class="num">01</span>
+        <div>
+          <h3>Phase 2 began</h3>
+          <p>You shifted from Figma designer to Copilot director. Microsoft Copilot writes the code — you direct it, evaluate it, and refine it.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="2">
+        <span class="num">02</span>
+        <div>
+          <h3>HTML skeleton built</h3>
+          <p>Semantic HTML5, all five anatomy sections, zero inline styles. Structure only — the correct scope for Layer 1.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="3">
+        <span class="num">03</span>
+        <div>
+          <h3>Layer 1 evaluated against the rejection checklist</h3>
+          <p>No style attributes, no colour values, no font-family references. Plain and unstyled was the goal — and it was correct.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════ REVIEW B -->
+<section class="section" id="review2" data-title="Review / Quiz">
+  <div class="inner">
+    <div class="num-list">
+      <div class="num-item rev" data-d="1">
+        <span class="num">04</span>
+        <div>
+          <h3>Live on GitHub Pages</h3>
+          <p>index.html is hosted. That URL is your Assessment 2 submission — the same address will carry every layer you build from here.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="2">
+        <span class="num">05</span>
+        <div>
+          <h3>AI Declaration updated</h3>
+          <p>Steps 3 and 4 completed — the prompt you used and the material Copilot generated, documented honestly.</p>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="3">
+        <span class="num">06</span>
+        <div>
+          <h3>Design tokens ready</h3>
+          <p>HEX colours, font names, and spacing values extracted from Figma. You will need every one of them today.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule mt64 mb48 rev"></div>
+    <h3 class="d-sm mb40 rev">Can you answer these<br>before we start?</h3>
+    <div class="num-list">
+      <div class="num-item rev" data-d="1">
+        <span class="num">01</span>
+        <div>
+          <h3>Your HTML skeleton is unstyled — what does it look like in the browser right now?</h3>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="2">
+        <span class="num">02</span>
+        <div>
+          <h3>What class names did you give your sections, and do they match your Figma wireframe sections?</h3>
+        </div>
+      </div>
+      <div class="num-item rev" data-d="3">
+        <span class="num">03</span>
+        <div>
+          <h3>What are the HEX values, Google Font names, and spacing values from your Figma design system?</h3>
+        </div>
+      </div>
+    </div>
+    <p class="body-sm mt24 rev">If you cannot answer question 3, open your Figma file now. <span class="accent">You will need those values today.</span></p>
+  </div>
+</section>
+
+
+<!-- ═════════════════════════════════════════════ DIVIDER: COMPARISON -->
+<section class="section" id="divider-comparison" data-title="Comparison">
+  <div class="inner">
+    <span class="divider-index rev">01</span>
+    <h2 class="d-lg rev" data-d="1">THE COMPARISON<br><span class="accent">METHOD</span></h2>
+    <hr class="rule mt48 rev" data-d="2">
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ COMPARISON -->
+<section class="section" id="comparison" data-title="Figma vs Browser">
+  <div class="inner">
+    <h2 class="d-md mb48 rev">Figma and Browser,<br><span class="accent">Side by Side.</span></h2>
+    <div class="vs-wrap mb48 rev" data-d="2">
+      <div class="vs-col">
+        <div class="vs-col-tag">Figma</div>
+        <h3>Source of Truth</h3>
+        <ul>
+          <li>Your hi-fi mockup — the reference</li>
+          <li>Zoom to 100%</li>
+          <li>Work one section at a time — hero first</li>
+          <li>Note exact HEX, font, and spacing values</li>
+          <li>Screenshot before prompting</li>
+        </ul>
+      </div>
+      <div class="vs-mid">VS</div>
+      <div class="vs-col">
+        <div class="vs-col-tag">Browser</div>
+        <h3>Live Output</h3>
+        <ul>
+          <li>Your live GitHub Pages site</li>
+          <li>Open DevTools (F12)</li>
+          <li>Look at the same section as Figma</li>
+          <li>List specific differences</li>
+          <li>Each difference becomes a Layer 2 fix</li>
+        </ul>
+      </div>
+    </div>
+    <p class="body-md rev" data-d="3">The comparison method applies to every layer. <span class="accent">It is never one prompt and done.</span> It is always: prompt → compare → identify → fix.</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════ DIVIDER: LAYER 2 -->
+<section class="section" id="divider-layer2" data-title="Layer 2">
+  <div class="inner">
+    <span class="divider-index rev">02</span>
+    <h2 class="d-lg rev" data-d="1">LAYER 2<br><span class="accent">STYLING</span></h2>
+    <hr class="rule mt48 rev" data-d="2">
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ LAYER 2 COLOUR -->
+<section class="section" id="layer2-colour" data-title="Colour">
+  <div class="inner">
+    <div class="sub-tag rev">Layer 2 / 01</div>
+    <h2 class="d-md mb32 rev" data-d="1">Colour</h2>
+    <p class="body-lg rev" data-d="2">Pulled from your Figma palette. Background, text, button, and border colours as HEX — applied as CSS custom properties, not hard-coded.</p>
+    <div class="constraint-line rev" data-d="3">Do not add responsiveness yet. Do not add hover states yet. <span>Colour only.</span></div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════ LAYER 2 TYPOGRAPHY -->
+<section class="section" id="layer2-typography" data-title="Typography">
+  <div class="inner">
+    <div class="sub-tag rev">Layer 2 / 02</div>
+    <h2 class="d-md mb32 rev" data-d="1">Typography</h2>
+    <p class="body-lg rev" data-d="2">Your Google Fonts heading and body font. Sizes from your text style definitions — line-height and letter-spacing included.</p>
+    <div class="constraint-line rev" data-d="3">Do not add font-weight unless it is in your design system. <span>Match what Figma defines.</span></div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ LAYER 2 SPACING -->
+<section class="section" id="layer2-spacing" data-title="Spacing">
+  <div class="inner">
+    <div class="sub-tag rev">Layer 2 / 03</div>
+    <h2 class="d-md mb32 rev" data-d="1">Spacing</h2>
+    <p class="body-lg rev" data-d="2">The 8px grid scale — 8, 16, 24, 32, 48, 64px. Section padding, container max-width, and card gaps, all as CSS custom properties.</p>
+    <div class="constraint-line rev" data-d="3">Do not add animations, transitions, or box shadows yet. <span>Spacing only.</span></div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ CSS VARS -->
+<section class="section" id="css-vars" data-title="CSS Variables">
+  <div class="inner">
+    <div class="label rev">Illustrative example</div>
+    <h2 class="d-md mb16 rev" data-d="1">Custom Properties,<br><span class="accent">Not Hard-Coded Values.</span></h2>
+    <p class="body-lg mb40 rev" data-d="2">A generic example — not a real student's site. This is the shape your <code>:root</code> declarations should take.</p>
+    <div class="code-block rev" data-d="3">
+      <div class="code-head">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-file">style.css — :root</span>
+      </div>
+      <pre><span class="c">:root</span> {
+  <span class="p">--color-primary</span>: <span class="v">#1D4ED8</span>;
+  <span class="p">--color-bg</span>: <span class="v">#F8FAFC</span>;
+  <span class="p">--color-text</span>: <span class="v">#1E293B</span>;
+  <span class="p">--font-heading</span>: <span class="v">'Playfair Display'</span>;
+  <span class="p">--font-body</span>: <span class="v">'Inter'</span>;
+  <span class="p">--space-sm</span>: <span class="v">8px</span>;
+  <span class="p">--space-md</span>: <span class="v">16px</span>;
+  <span class="p">--space-lg</span>: <span class="v">32px</span>;
+  <span class="p">--space-xl</span>: <span class="v">64px</span>;
+}</pre>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ PLAYGROUND -->
+<section class="section" id="playground" data-title="Try It">
+  <div class="inner">
+    <div class="label rev">Try it</div>
+    <h2 class="d-md mb16 rev" data-d="1">One Variable.<br><span class="accent">Everywhere It's Used.</span></h2>
+    <p class="body-lg mb48 rev" data-d="2">This is what <code>--color-primary</code> and a font-size custom property actually do. Change the value once — every element referencing it updates instantly. Try it below.</p>
+
+    <div class="playground rev" data-d="3">
+      <div class="code-head">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-file">style.css — live</span>
+      </div>
+      <div class="playground-mock" id="pgMock">
+        <div class="pg-nav">
+          <div class="pg-brand"><span class="pg-dot" id="pgDot"></span>Studio</div>
+          <div class="pg-links"><span>Work</span><span>About</span><span>Contact</span></div>
+        </div>
+        <div class="pg-hero">
+          <h3 class="pg-h1" id="pgH1">Change It Once.</h3>
+          <button class="pg-btn" id="pgBtn" tabindex="-1">See Everywhere →</button>
+        </div>
+      </div>
+      <div class="playground-controls">
+        <div class="pg-control-group">
+          <span class="pg-control-label">--color-primary</span>
+          <div class="pg-swatches" id="pgSwatches">
+            <button class="pg-swatch active" data-color="#c6fe7f" style="background:#c6fe7f" aria-label="Set primary colour to live green"></button>
+            <button class="pg-swatch" data-color="#3b82f6" style="background:#3b82f6" aria-label="Set primary colour to blue"></button>
+            <button class="pg-swatch" data-color="#f97316" style="background:#f97316" aria-label="Set primary colour to orange"></button>
+            <button class="pg-swatch" data-color="#ec4899" style="background:#ec4899" aria-label="Set primary colour to pink"></button>
+          </div>
+        </div>
+        <div class="pg-control-group">
+          <span class="pg-control-label">--font-size-h1</span>
+          <div class="pg-slider-row">
+            <input type="range" min="18" max="56" value="32" class="pg-slider" id="pgSlider" aria-label="Heading font size in pixels">
+            <span class="pg-slider-val" id="pgSliderVal">32px</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="body-sm mt24 rev" data-d="4">Four elements. One declaration each. That's the entire argument for custom properties over hard-coded values.</p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ FONTS -->
+<section class="section" id="fonts" data-title="Google Fonts">
+  <div class="inner">
+    <h2 class="d-md mb16 rev">Linking<br><span class="accent">Google Fonts</span></h2>
+    <p class="body-lg mb48 rev" data-d="2">Copilot cannot guess a font it hasn't been told about. Link it, then name it — explicitly, every time.</p>
+    <div class="flow rev" data-d="1">
+      <div class="flow-step on">
+        <div class="flow-n">1</div>
+        <div>
+          <h4>Find your font</h4>
+          <p>Go to fonts.google.com, find your heading font, and copy the embed <code>&lt;link&gt;</code> tag.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">2</div>
+        <div>
+          <h4>Order matters</h4>
+          <p>The link tag goes in <code>&lt;head&gt;</code>, before the stylesheet link.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">3</div>
+        <div>
+          <h4>Reference it exactly</h4>
+          <p>Use the exact font name in your CSS — quoted if it's multi-word.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-n">4</div>
+        <div>
+          <h4>Tell Copilot both names</h4>
+          <p>Heading font and body font, explicitly, in the prompt. It cannot guess.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ SPACING SCALE -->
+<section class="section" id="spacing-table" data-title="Spacing Scale">
+  <div class="inner">
+    <h2 class="d-md mb40 rev">The 8px<br><span class="accent">Spacing Scale</span></h2>
+    <div class="rev" data-d="1" style="overflow-x:auto;">
+      <table class="spec-table">
+        <thead>
+          <tr><th>Variable</th><th>Value</th><th>Common use</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">--space-xs</td><td>4px</td><td>Icon padding, tight gaps</td></tr>
+          <tr><td class="mono">--space-sm</td><td>8px</td><td>Between inline elements</td></tr>
+          <tr><td class="mono">--space-md</td><td>16px</td><td>Card padding, list gaps</td></tr>
+          <tr><td class="mono">--space-lg</td><td>24px</td><td>Section padding (mobile)</td></tr>
+          <tr><td class="mono">--space-xl</td><td>32px</td><td>Section padding (desktop)</td></tr>
+          <tr><td class="mono">--space-2xl</td><td>48px</td><td>Large section gaps</td></tr>
+          <tr><td class="mono">--space-3xl</td><td>64px</td><td>Hero padding, major gaps</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ TEMPLATE -->
+<section class="section" id="prompt-template" data-title="Template">
+  <div class="inner">
+    <div class="label rev">The Layer 2 Prompt Template</div>
+    <p class="body-md mb32 rev" data-d="1">Copy this structure. Fill in the square brackets with your own design tokens — read straight from Figma, nothing approximated.</p>
+    <div class="code-block rev" data-d="2">
+      <div class="code-head">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-file">Layer 2 Prompt Template — Copilot</span>
+      </div>
+      <pre class="wrap">I already have a complete HTML skeleton for <span class="v">[business name]</span>,
+live at <span class="v">[your GitHub Pages URL]</span>.
+
+Please add a style.css file that applies the following
+design system. Do not change the HTML structure.
+
+<span class="c">Do not add responsiveness yet.</span>
+<span class="c">Do not add hover states yet.</span>
+<span class="c">Colour, typography, and spacing only.</span>
+
+COLOUR — as CSS custom properties in :root, not hard-coded:
+--color-primary: <span class="v">[HEX]</span>
+--color-secondary: <span class="v">[HEX]</span>
+--color-bg: <span class="v">[HEX]</span>
+--color-text: <span class="v">[HEX]</span>
+--color-nav-bg: <span class="v">[HEX]</span>
+--color-cta: <span class="v">[HEX]</span>
+--color-accent: <span class="v">[HEX]</span>
+
+TYPOGRAPHY:
+Heading font: <span class="v">[Google Font name]</span>, H1 <span class="v">[X]</span>px, H2 <span class="v">[X]</span>px
+Body font: <span class="v">[Google Font name]</span>, <span class="v">[X]</span>px, line-height <span class="v">[X]</span>
+
+SPACING — 8px scale, as CSS custom properties:
+--space-xs: 4px  --space-sm: 8px   --space-md: 16px
+--space-lg: 24px --space-xl: 32px  --space-2xl: 48px
+--space-3xl: 64px
+
+Apply these to: header/nav background and padding, hero
+section background and heading, button background and
+padding, section padding, and card/content gaps.</pre>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ FAILURES A -->
+<section class="section" id="failures-1" data-title="Failures">
+  <div class="inner">
+    <div class="label rev">When it goes wrong</div>
+    <h2 class="d-md mb40 rev" data-d="1">Common Layer 2<br>Failures</h2>
+    <div>
+      <div class="fail-item rev" data-d="1">
+        <span class="fail-mark">!</span>
+        <div>
+          <h3>Font not loading</h3>
+          <p class="fail-fix">Add the Google Fonts link for [FONT NAME] to the head. Use the exact embed URL from fonts.google.com.</p>
+        </div>
+      </div>
+      <div class="fail-item rev" data-d="2">
+        <span class="fail-mark">!</span>
+        <div>
+          <h3>Wrong colour applied</h3>
+          <p class="fail-fix">Change the background-color of .hero to #[HEX]. It must match my design system exactly.</p>
+        </div>
+      </div>
+      <div class="fail-item rev" data-d="3">
+        <span class="fail-mark">!</span>
+        <div>
+          <h3>No max-width — content spans full screen</h3>
+          <p class="fail-fix">Add a .container class with max-width: 1200px and margin: 0 auto. Wrap all section content in it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════ FAILURES B -->
+<section class="section" id="failures-2" data-title="Failures / 2">
+  <div class="inner">
+    <div>
+      <div class="fail-item rev" data-d="1">
+        <span class="fail-mark">!</span>
+        <div>
+          <h3>Cards stacking vertically</h3>
+          <p class="fail-fix">Apply display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; to the .cards section.</p>
+        </div>
+      </div>
+      <div class="fail-item rev" data-d="2">
+        <span class="fail-mark">!</span>
+        <div>
+          <h3>Spacing too tight or too loose</h3>
+          <p class="fail-fix">Change all padding and margin values to multiples of 8px. Use my spacing scale: 8, 16, 24, 32, 48, 64.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ STATEMENT -->
+<section class="section statement-slide" id="statement" data-title="Statement">
+  <div class="inner">
+    <div class="callout rev">
+      <p class="callout-text">Your design system exists to be used. Not once — <span class="accent">everywhere.</span></p>
+      <p class="callout-sub">A colour you pick once in Figma and then hard-code differently in CSS is not a design system. It is a coincidence.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════ CHECK-IN -->
+<section class="section" id="checkin" data-title="Check-In">
+  <div class="inner">
+    <h2 class="d-sm mb40 rev">Are you<br>on track?</h2>
+    <div class="checkin-list mb64">
+      <div class="checkin-item rev" data-d="1">
+        <span class="checkin-n">01</span>
+        <div>
+          <h3>Have you extracted your design tokens from Figma?</h3>
+          <p>HEX colours, font names, spacing scale — all read directly from your file, not approximated.</p>
+        </div>
+      </div>
+      <div class="checkin-item rev" data-d="2">
+        <span class="checkin-n">02</span>
+        <div>
+          <h3>Have you run your Layer 2 prompt and received a style.css file?</h3>
+          <p>Root variables, colour/typography/spacing only — no media queries yet.</p>
+        </div>
+      </div>
+      <div class="checkin-item rev" data-d="3">
+        <span class="checkin-n">03</span>
+        <div>
+          <h3>Have you compared your styled site to your Figma mockup section by section?</h3>
+          <p>At least header and hero should match. Everything else becomes a fix prompt.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule mb48 rev"></div>
+    <div class="concepts-grid mt24 rev" data-d="1">
+      <div class="concept-cell">
+        <span class="concept-n">01</span>
+        <div>
+          <div class="concept-title">The comparison method</div>
+          <p class="concept-body">Figma is the source of truth, the browser is the output. Prompt, compare, identify, fix — every layer, every week.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">02</span>
+        <div>
+          <div class="concept-title">CSS custom properties</div>
+          <p class="concept-body">Declared once in :root, referenced everywhere. Change the value once and every element updates.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">03</span>
+        <div>
+          <div class="concept-title">Google Fonts</div>
+          <p class="concept-body">Linked in the head before your stylesheet, referenced by exact name. Copilot cannot guess a font it hasn't been told.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">04</span>
+        <div>
+          <div class="concept-title">The 8px spacing scale</div>
+          <p class="concept-body">8, 16, 24, 32, 48, 64. Every padding and margin value should land on this scale — nothing arbitrary.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">05</span>
+        <div>
+          <div class="concept-title">Layer 2 scope discipline</div>
+          <p class="concept-body">Colour, typography, and spacing only. No responsiveness, no hover states, no animation — that's Layer 3 and 4.</p>
+        </div>
+      </div>
+      <div class="concept-cell">
+        <span class="concept-n">06</span>
+        <div>
+          <div class="concept-title">Failure is expected</div>
+          <p class="concept-body">Copilot will get colours and fonts wrong. Document every failure and every fix prompt in your AI Declaration.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ NEXT -->
+<section class="section" id="next" data-title="Next Week">
+  <div class="inner">
+    <div class="label rev">Completed ✓</div>
+    <h2 class="d-lg mb48 rev" data-d="1">Forum Ten<br>Complete.</h2>
+
+    <div class="next-card rev" data-d="2">
+      <div class="next-tag">Week 11 →</div>
+      <h3>Responsiveness, Ethics, and the Final Push</h3>
+      <p>Forum: WCAG accessibility, colour contrast, copyright, Creative Commons, and the ethics of AI-generated imagery. Lab: your Layer 3 + 4 sprint. Last teaching session before Assessment 2 presentations.</p>
+      <div class="label mb16">Before next week</div>
+      <div class="before-list">
+        <div class="before-item">Styled site live on GitHub Pages</div>
+        <div class="before-item">Comparison documented for at least header and hero</div>
+        <div class="before-item">AI Declaration updated</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer>
+  <div class="footer-brand">DIGM11-110 <span>·</span> Bond University</div>
+  <div class="footer-info">Week 10 · Styling with Copilot · 2026</div>
+</footer>
+
+
+<script>
+/* ── CURSOR ────────────────────────────────────────────────────── */
+const cursor = document.getElementById('cursor');
+let mx = 0, my = 0, cx = 0, cy = 0;
+const hasHover = window.matchMedia('(hover: hover)').matches;
+if (hasHover) {
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; }, { passive: true });
+  (function raf() {
+    cx += (mx - cx) * 0.16;
+    cy += (my - cy) * 0.16;
+    cursor.style.transform = `translate(${cx - 10}px,${cy - 10}px)`;
+    requestAnimationFrame(raf);
+  })();
+  document.querySelectorAll('a,button').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+  });
+} else {
+  cursor.style.display = 'none';
+}
+
+/* ── PROGRESS BAR ──────────────────────────────────────────────── */
+const fill = document.getElementById('progressFill');
+window.addEventListener('scroll', () => {
+  const max = document.body.scrollHeight - window.innerHeight;
+  fill.style.transform = 'scaleX(' + (max > 0 ? window.scrollY / max : 0) + ')';
+}, { passive: true });
+
+/* ── SLIDE NAV + COUNTER ───────────────────────────────────────────── */
+const slides = [...document.querySelectorAll('#hero, .section')];
+const navEl  = document.getElementById('slide-nav');
+const curEl  = document.getElementById('counter-cur');
+const totEl  = document.getElementById('counter-total');
+const TOTAL  = slides.length;
+totEl.textContent = String(TOTAL).padStart(2, '0');
+
+// Disabling snap for the duration of a programmatic jump avoids a Chrome
+// quirk where scroll-snap-type: mandatory can fight a JS-triggered smooth
+// scrollIntoView (most visible on keyboard nav) and refuse to move.
+function goToSlide(target) {
+  document.documentElement.style.scrollSnapType = 'none';
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const restore = () => { document.documentElement.style.scrollSnapType = ''; };
+  if ('onscrollend' in window) {
+    window.addEventListener('scrollend', restore, { once: true });
+  } else {
+    setTimeout(restore, 700);
+  }
+}
+
+slides.forEach((slide, i) => {
+  const title = slide.dataset.title || 'Section ' + (i + 1);
+  const dot   = document.createElement('div');
+  dot.className = 'nav-dot';
+  dot.setAttribute('aria-label', title);
+  dot.innerHTML = '<span class="nav-dot-label">' + title + '</span><div class="nav-dot-pip"></div>';
+  dot.addEventListener('click', () => goToSlide(slide));
+  navEl.appendChild(dot);
+});
+const navDots = [...navEl.querySelectorAll('.nav-dot')];
+
+// rootMargin (not a fixed area-ratio threshold) so this tracks correctly
+// whether a slide is one viewport tall or several — it fires when the
+// slide's edge crosses the viewport's centre band, not by % of its own area.
+const slideIO = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const idx = slides.indexOf(entry.target);
+      slides.forEach(s => s.classList.remove('is-active'));
+      entry.target.classList.add('is-active');
+      navDots.forEach((d, i) => d.classList.toggle('active', i === idx));
+      curEl.textContent = String(idx + 1).padStart(2, '0');
+    }
+  });
+}, { rootMargin: '-45% 0px -45% 0px' });
+slides.forEach(s => slideIO.observe(s));
+
+document.addEventListener('keydown', e => {
+  const active = slides.findIndex(s => s.classList.contains('is-active'));
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+    e.preventDefault();
+    const next = slides[Math.min(active + 1, TOTAL - 1)];
+    if (next) goToSlide(next);
+  }
+  if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+    e.preventDefault();
+    const prev = slides[Math.max(active - 1, 0)];
+    if (prev) goToSlide(prev);
+  }
+});
+
+slides[0].classList.add('is-active');
+navDots[0] && navDots[0].classList.add('active');
+
+/* ── REVEAL ON SCROLL ───────────────────────────────────────────── */
+const prefersMotion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (prefersMotion) {
+  const revealIO = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); revealIO.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.rev').forEach(el => revealIO.observe(el));
+} else {
+  document.querySelectorAll('.rev').forEach(el => el.classList.add('in'));
+}
+
+/* ── CSS VARIABLE PLAYGROUND ──────────────────────────────────────── */
+(function() {
+  const mock = document.getElementById('pgMock');
+  if (!mock) return;
+  const swatches = document.querySelectorAll('.pg-swatch');
+  swatches.forEach(sw => {
+    sw.addEventListener('click', () => {
+      mock.style.setProperty('--pg-color', sw.dataset.color);
+      swatches.forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+    });
+  });
+  const slider = document.getElementById('pgSlider');
+  const sliderVal = document.getElementById('pgSliderVal');
+  slider.addEventListener('input', () => {
+    mock.style.setProperty('--pg-size', slider.value + 'px');
+    sliderVal.textContent = slider.value + 'px';
+  });
+})();
+</script>
+</body>
+</html>
